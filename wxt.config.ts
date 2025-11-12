@@ -8,10 +8,13 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
     optimizeDeps: {
-      exclude: ["@tailwindcss/vite"]
+      exclude: ["@tailwindcss/vite"],
     },
     esbuild: {
-      logLevel: 'error'
-    }
+      logLevel: "error",
+    },
   }),
+  manifest: {
+    permissions: ["storage"],
+  },
 });
