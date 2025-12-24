@@ -6,7 +6,9 @@
   export let item: Item;
 
   // 2. Criamos um "despachante de eventos" para comunicar com o componente pai.
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher<{
+    toggle: { id: string };
+  }>();
 
   function handleToggle() {
     // 3. Em vez de alterar os dados aqui, ele "avisa" o pai que uma tarefa foi alternada.
@@ -14,7 +16,6 @@
   }
 </script>
 
-<!-- O HTML é o mesmo de antes, mas agora está encapsulado e reutilizável -->
 <div class="card bg-base-100 shadow-xl">
   <div class="card-body">
     <h2 class="card-title capitalize">{item.type}</h2>

@@ -1,20 +1,21 @@
 <script lang="ts">
-  import { itemsStorage } from "@/lib/storage";
   import { onMount } from "svelte";
-  import "./app.css";
-  import ItemCard from "./ItemCard.svelte";
-  import type { Item } from "./types";
 
-  // --- Estado da Aplicação ---
+  import { goalsStorage, itemsStorage } from "@/lib/storage";
+  import GoalCard from "./GoalCard.svelte";
+  import ItemCard from "./ItemCard.svelte";
+  import type { Goal, Item } from "./types";
+
+  import "./app.css";
+
   let items: Item[] = [];
+  let goals: Goal[] = [];
   let currentDate = "";
   let currentTime = "";
 
-  // --- Estado do Formulário ---
   let selectedType: Item["type"] = "note";
   let content = "";
 
-  // --- Funções ---
   function updateDateTime() {
     const now = new Date();
     currentDate = now.toLocaleDateString("pt-BR", {
@@ -31,20 +32,18 @@
 
   async function handleSubmit() {
     if (!content.trim()) return;
-
     const newItem: Item = {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       type: selectedType,
       content: content.trim(),
       completed: selectedType === "task" ? false : undefined,
     };
-
     items = [...items, newItem];
     await itemsStorage.setValue(items);
     content = "";
   }
 
-  async function handleToggleTask(event: CustomEvent<{ id: number }>) {
+  async function handleToggleTask(event: CustomEvent<{ id: string }>) {
     const { id } = event.detail;
     items = items.map((item) =>
       item.id === id ? { ...item, completed: !item.completed } : item
@@ -52,10 +51,32 @@
     await itemsStorage.setValue(items);
   }
 
-  // --- Ciclo de Vida ---
+  async function handleToggleMilestone(
+    event: CustomEvent<{ goalId: string; milestoneId: string }>
+  ) {
+    const { goalId, milestoneId } = event.detail;
+
+    goals = goals.map((g) => {
+      if (g.id === goalId) {
+        const updatedMilestones = g.milestones.map((m) => {
+          if (m.id === milestoneId) {
+            return { ...m, completed: !m.completed };
+          }
+          return m;
+        });
+        return { ...g, milestones: updatedMilestones };
+      }
+      return g;
+    });
+
+    await goalsStorage.setValue(goals);
+  }
+
   onMount(() => {
     (async () => {
       items = await itemsStorage.getValue();
+      goals = await goalsStorage.getValue();
+      updateDateTime();
     })();
 
     updateDateTime();
@@ -74,11 +95,23 @@
       </div>
     </header>
 
+    <section class="p-8 pt-0">
+      <h2 class="text-xl font-bold mb-4 opacity-80">Metas de Longo Prazo</h2>
+
+      <div class="space-y-4">
+        {#each goals as goal (goal.id)}
+          <GoalCard {goal} on:toggleMilestone={handleToggleMilestone} />
+        {/each}
+      </div>
+    </section>
+
     <main class="flex-grow p-8 overflow-y-auto space-y-4">
-      <!-- 3. O loop agora é muito mais limpo! -->
-      {#each items as item (item.id)}
-        <ItemCard {item} on:toggle={handleToggleTask} />
-      {/each}
+      <h2 class="text-xl font-bold mb-4 opacity-80">Itens Diários</h2>
+      <div class="space-y-4">
+        {#each items as item (item.id)}
+          <ItemCard {item} on:toggle={handleToggleTask} />
+        {/each}
+      </div>
     </main>
   </div>
 
@@ -103,25 +136,30 @@
         </div>
 
         {#if selectedType === "note" || selectedType === "task"}
-          <fieldset class="fieldset">
-            <legend class="label">Conteúdo</legend>
+          <div class="form-control">
+            <label class="label" for="content-text">
+              <span class="label-text">Conteúdo</span>
+            </label>
             <textarea
-              name="textarea textarea-bordered"
-              id=""
-              placeholder="Escreva a sua nota ou tarefa aqui..."
+              id="content-text"
+              class="textarea textarea-bordered h-24"
+              placeholder="Escreva sua nota ou tarefa..."
               bind:value={content}
             ></textarea>
-          </fieldset>
+          </div>
         {:else if selectedType === "link"}
-          <fieldset class="fieldset">
-            <legend class="label">URL</legend>
+          <div class="form-control w-full max-w-xs">
+            <label class="label" for="content-link">
+              <span class="label-text">URL do Link</span>
+            </label>
             <input
               type="url"
+              id="content-link"
               class="input input-bordered w-full max-w-xs"
-              placeholder="https://example.com"
+              placeholder="https://exemplo.com"
               bind:value={content}
             />
-          </fieldset>
+          </div>
         {/if}
 
         <button class="btn btn-primary w-full">Adicionar</button>
