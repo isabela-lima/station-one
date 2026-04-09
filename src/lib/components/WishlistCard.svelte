@@ -1,0 +1,92 @@
+<script lang="ts">
+	import type { WishlistItem } from '$lib/types';
+	import { ShoppingBag, ExternalLink, Trash2, TrendingDown } from 'lucide-svelte';
+
+	let {
+		wishlistItem,
+		onDelete,
+		index = 0
+	}: {
+		wishlistItem: WishlistItem;
+		onDelete: (id: string) => void;
+		index?: number;
+	} = $props();
+
+	const isGoodDeal = $derived(wishlistItem.currentPrice <= wishlistItem.targetPrice);
+	const savings = $derived(wishlistItem.targetPrice - wishlistItem.currentPrice);
+
+	function formatPrice(value: number) {
+		return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+	}
+</script>
+
+<div
+	class="glass-card card-enter group relative p-4"
+	style="animation-delay: {index * 60}ms"
+>
+	<div class="flex gap-3 items-start">
+		<!-- Image or icon -->
+		{#if wishlistItem.imageUrl}
+			<img
+				src={wishlistItem.imageUrl}
+				alt={wishlistItem.title}
+				class="w-14 h-14 object-cover rounded-lg shrink-0 border"
+				style="border-color: rgba(6,182,212,0.15)"
+			/>
+		{:else}
+			<div
+				class="w-14 h-14 rounded-lg shrink-0 flex items-center justify-center"
+				style="background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.2)"
+			>
+				<ShoppingBag size={20} class="text-secondary/60" />
+			</div>
+		{/if}
+
+		<!-- Info -->
+		<div class="flex-1 min-w-0">
+			<div class="flex items-start justify-between gap-2">
+				<a
+					href={wishlistItem.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="font-semibold text-sm hover:text-primary transition-colors truncate block leading-snug group/link flex items-center gap-1"
+				>
+					{wishlistItem.title}
+					<ExternalLink size={10} class="opacity-0 group-hover/link:opacity-60 shrink-0 mt-0.5 transition-opacity" />
+				</a>
+				<button
+					onclick={() => onDelete(wishlistItem.id)}
+					class="btn btn-ghost btn-xs text-error/50 hover:text-error rounded-full opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+					title="Deletar"
+					aria-label="Deletar da wishlist"
+				>
+					<Trash2 size={13} />
+				</button>
+			</div>
+
+			{#if wishlistItem.description}
+				<p class="text-xs text-base-content/40 line-clamp-1 mt-0.5">{wishlistItem.description}</p>
+			{/if}
+
+			<div class="flex items-center gap-2 mt-2 flex-wrap">
+				<span
+					class="text-sm font-semibold"
+					class:text-success={isGoodDeal}
+					class:text-error={!isGoodDeal}
+				>
+					{formatPrice(wishlistItem.currentPrice)}
+				</span>
+				<span class="text-xs text-base-content/40">meta: {formatPrice(wishlistItem.targetPrice)}</span>
+				{#if isGoodDeal && savings > 0}
+					<span
+						class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+						style="background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.3)"
+					>
+						<TrendingDown size={9} />
+						economiza {formatPrice(savings)}
+					</span>
+				{/if}
+			</div>
+		</div>
+	</div>
+</div>
