@@ -77,8 +77,8 @@
 				bind:value={content}
 				oninput={handleInput}
 				placeholder="O que aconteceu hoje, Comandante?"
-				class="daily-log-textarea w-full resize-none bg-transparent text-sm leading-relaxed text-base-content/70 placeholder:text-base-content/20 outline-none"
-				rows={3}
+				class="daily-log-textarea w-full resize-none bg-transparent text-sm leading-relaxed text-base-content/70 placeholder:text-base-content/20 outline-none focus:rows-5 transition-all"
+				rows={2}
 			></textarea>
 		{/if}
 	</div>

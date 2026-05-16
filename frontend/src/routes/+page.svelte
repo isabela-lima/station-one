@@ -445,7 +445,7 @@
 	<main class="flex-1 flex flex-col overflow-y-auto pb-20 lg:pb-0">
 
 		<!-- Header -->
-		<header class="flex items-end justify-between px-8 pt-8 pb-6">
+		<header class="flex items-end justify-between px-8 pt-6 pb-4">
 			<div class="flex items-center gap-3">
 				<div class="flex h-9 w-9 items-center justify-center rounded-full" style="background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.25)">
 					<Satellite size={18} class="text-primary" />
@@ -493,31 +493,31 @@
 
 		<!-- ── Section: Operações ───────────────────────── -->
 		{#if activeSection === 'operations'}
-			<section class="flex-1 px-8 pb-8">
-				<div class="mb-4 flex items-center justify-between">
+			<section class="flex-1 px-6 pb-6">
+				<div class="mb-2 flex items-center justify-between px-1">
 					<div class="flex items-center gap-2">
-						<Zap size={16} class="text-primary" />
-						<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Operações</h2>
-						<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(6,182,212,0.12); color: #06b6d4">{items.length}</span>
+						<Zap size={14} class="text-primary" />
+						<h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40">Operações</h2>
+						<span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(6,182,212,0.12); color: #06b6d4">{items.length}</span>
 					</div>
 					{#if completedTasks.length > 0}
-						<button onclick={handleClearCompleted} class="btn btn-ghost btn-xs gap-1 text-base-content/40 hover:text-error">
-							<Trash2 size={12} />
+						<button onclick={handleClearCompleted} class="btn btn-ghost btn-xs gap-1 text-base-content/30 hover:text-error">
+							<Trash2 size={11} />
 							Limpar concluídas ({completedTasks.length})
 						</button>
 					{/if}
 				</div>
 
 				{#if loading}
-					<div class="space-y-3">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-16 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-1">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-8 w-full rounded-lg" style="animation-delay: {i * 100}ms"></div>{/each}</div>
 				{:else}
-					<div class="space-y-3">
+					<div class="space-y-0.5">
 						{#each items as item, i (item.id)}
 							<ItemCard {item} index={i} pending={pendingIds.has(item.id)} onToggle={handleToggleItem} onDelete={handleDeleteItem} onTogglePriority={handleTogglePriority} />
 						{/each}
 						{#if items.length === 0}
 							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
-								<Zap size={32} />
+								<Zap size={28} />
 								<p class="text-sm text-center">Nenhuma operação ainda.<br />Adicione uma pela barra lateral.</p>
 							</div>
 						{/if}
