@@ -12,5 +12,5 @@ frontend: ## Sobe só o frontend
 	cd frontend && pnpm dev
 
 install: ## Instala dependências dos dois projetos
-	cd frontend && pnpm install
+	cd frontend && pnpm install && node_modules/.bin/svelte-kit sync
 	cd api && poetry install
