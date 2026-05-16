@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.venv/          # caso use poetry config virtualenvs.in-project true
+.DS_Store
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+poetry.lock     # opcional: commitar se quiser builds reproduzíveis
