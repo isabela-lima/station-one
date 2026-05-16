@@ -1,19 +1,21 @@
 <script lang="ts">
-	import type { WishlistItem } from '$lib/types';
+	import type { WishlistItem } from '$lib';
 	import { ShoppingBag, ExternalLink, Trash2, TrendingDown } from 'lucide-svelte';
 
 	let {
 		wishlistItem,
 		onDelete,
+		pending = false,
 		index = 0
 	}: {
 		wishlistItem: WishlistItem;
 		onDelete: (id: string) => void;
+		pending?: boolean;
 		index?: number;
 	} = $props();
 
-	const isGoodDeal = $derived(wishlistItem.currentPrice <= wishlistItem.targetPrice);
-	const savings = $derived(wishlistItem.targetPrice - wishlistItem.currentPrice);
+	const isGoodDeal = $derived(wishlistItem.current_price <= wishlistItem.target_price);
+	const savings = $derived(wishlistItem.target_price - wishlistItem.current_price);
 
 	function formatPrice(value: number) {
 		return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -26,9 +28,9 @@
 >
 	<div class="flex gap-3 items-start">
 		<!-- Image or icon -->
-		{#if wishlistItem.imageUrl}
+		{#if wishlistItem.image_url}
 			<img
-				src={wishlistItem.imageUrl}
+				src={wishlistItem.image_url}
 				alt={wishlistItem.title}
 				class="w-14 h-14 object-cover rounded-lg shrink-0 border"
 				style="border-color: rgba(6,182,212,0.15)"
@@ -59,8 +61,13 @@
 					class="btn btn-ghost btn-xs text-error/50 hover:text-error rounded-full opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
 					title="Deletar"
 					aria-label="Deletar da wishlist"
+					disabled={pending}
 				>
-					<Trash2 size={13} />
+					{#if pending}
+						<span class="loading loading-spinner loading-xs"></span>
+					{:else}
+						<Trash2 size={13} />
+					{/if}
 				</button>
 			</div>
 
@@ -74,9 +81,9 @@
 					class:text-success={isGoodDeal}
 					class:text-error={!isGoodDeal}
 				>
-					{formatPrice(wishlistItem.currentPrice)}
+					{formatPrice(wishlistItem.current_price)}
 				</span>
-				<span class="text-xs text-base-content/40">meta: {formatPrice(wishlistItem.targetPrice)}</span>
+				<span class="text-xs text-base-content/40">meta: {formatPrice(wishlistItem.target_price)}</span>
 				{#if isGoodDeal && savings > 0}
 					<span
 						class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"

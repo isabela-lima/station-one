@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "concurrently \"./bin/pocketbase serve --dir ./pb_data\" \"vite dev\"",
+		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
@@ -31,7 +31,7 @@
 		"vite-plugin-pwa": "^1.2.0"
 	},
 	"dependencies": {
-		"lucide-svelte": "^1.0.1",
-		"pocketbase": "^0.26.8"
+		"@supabase/supabase-js": "^2.103.0",
+		"lucide-svelte": "^1.0.1"
 	}
 }

@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { pb } from '$lib/pb';
+	import { supabase } from '$lib/supabase';
+	import { Satellite, Loader2, Mail, CheckCircle2, RotateCcw } from 'lucide-svelte';
+
+	/** 'login' | 'register' | 'confirm' */
+	let step = $state<'login' | 'register' | 'confirm'>('login');
 
 	let email = $state('');
 	let password = $state('');
 	let errorMsg = $state('');
 	let loading = $state(false);
-	let mode = $state<'login' | 'register'>('login');
+	let resendLoading = $state(false);
+	let resendSuccess = $state(false);
 
 	async function handleSubmit() {
 		if (!email.trim() || !password.trim()) return;
@@ -14,85 +19,355 @@
 		errorMsg = '';
 
 		try {
-			if (mode === 'login') {
-				await pb.collection('users').authWithPassword(email, password);
+			if (step === 'login') {
+				const { error } = await supabase.auth.signInWithPassword({ email, password });
+				if (error) {
+					if (error.message.toLowerCase().includes('email not confirmed')) {
+						// Redirect to confirm screen so user can resend
+						step = 'confirm';
+					} else if (error.message.toLowerCase().includes('invalid login')) {
+						errorMsg = 'Email ou senha inválidos.';
+					} else {
+						errorMsg = error.message;
+					}
+					return;
+				}
+				goto('/');
 			} else {
-				await pb.collection('users').create({ email, password, passwordConfirm: password });
-				await pb.collection('users').authWithPassword(email, password);
+				// register
+				const { data, error } = await supabase.auth.signUp({ email, password });
+				if (error) {
+					errorMsg = error.message;
+					return;
+				}
+				if (!data.session) {
+					// Email confirmation required — show confirm screen
+					step = 'confirm';
+					return;
+				}
+				// Confirmation disabled — signed in immediately
+				goto('/');
 			}
-			goto('/');
-		} catch (e: unknown) {
-			errorMsg =
-				mode === 'login'
-					? 'Email ou senha inválidos.'
-					: 'Não foi possível criar a conta. Verifique os dados.';
+		} catch {
+			errorMsg = 'Erro de conexão. Tente novamente.';
 		} finally {
 			loading = false;
 		}
 	}
+
+	async function handleResend() {
+		if (!email.trim() || resendLoading) return;
+		resendLoading = true;
+		resendSuccess = false;
+		try {
+			const { error } = await supabase.auth.resend({ type: 'signup', email });
+			if (!error) resendSuccess = true;
+			else errorMsg = error.message;
+		} catch {
+			errorMsg = 'Não foi possível reenviar o email.';
+		} finally {
+			resendLoading = false;
+		}
+	}
+
+	function goBack() {
+		step = 'login';
+		errorMsg = '';
+		resendSuccess = false;
+	}
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-4">
-	<div class="card bg-base-200 w-full max-w-sm p-8 space-y-6">
-		<div>
-			<h1 class="text-2xl font-bold">Station One</h1>
-			<p class="text-sm opacity-60 mt-1">
-				{mode === 'login' ? 'Entre na sua conta' : 'Crie sua conta'}
-			</p>
+<div class="login-bg min-h-screen flex items-center justify-center p-4">
+
+	<!-- Ambient glow -->
+	<div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+		<div class="glow-orb glow-orb-1"></div>
+		<div class="glow-orb glow-orb-2"></div>
+	</div>
+
+	<div class="login-card w-full max-w-sm">
+
+		<!-- Header -->
+		<div class="mb-8 flex flex-col items-center gap-3">
+			<div class="login-icon-ring">
+				{#if step === 'confirm'}
+					<Mail size={22} class="text-primary" />
+				{:else}
+					<Satellite size={22} class="text-primary" />
+				{/if}
+			</div>
+			<div class="text-center">
+				<h1 class="text-2xl font-bold tracking-tight text-base-content">Station One</h1>
+				<p class="mt-1 text-xs uppercase tracking-widest text-primary/50">
+					{#if step === 'login'}Acesso ao sistema
+					{:else if step === 'register'}Novo operador
+					{:else}Confirme seu email
+					{/if}
+				</p>
+			</div>
 		</div>
 
-		<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-			<div class="form-control">
-				<label class="label" for="email">
-					<span class="label-text">Email</span>
-				</label>
-				<input
-					id="email"
-					type="email"
-					class="input input-bordered"
-					placeholder="seu@email.com"
-					bind:value={email}
-					required
-				/>
-			</div>
+		<!-- ── Confirm Email Screen ─────────────────────── -->
+		{#if step === 'confirm'}
+			<div class="space-y-4">
+				<div class="login-info-box">
+					<div class="flex gap-3">
+						<Mail size={18} class="shrink-0 mt-0.5" style="color: #22d3ee" />
+						<div class="space-y-1">
+							<p class="text-sm font-semibold" style="color: #22d3ee">Verifique sua caixa de entrada</p>
+							<p class="text-xs text-base-content/60 leading-relaxed">
+								Enviamos um link de confirmação para <strong class="text-base-content/80">{email}</strong>.
+								Clique no link para ativar sua conta e depois volte aqui para entrar.
+							</p>
+						</div>
+					</div>
+				</div>
 
-			<div class="form-control">
-				<label class="label" for="password">
-					<span class="label-text">Senha</span>
-				</label>
-				<input
-					id="password"
-					type="password"
-					class="input input-bordered"
-					placeholder="••••••••"
-					bind:value={password}
-					required
-				/>
-			</div>
-
-			{#if errorMsg}
-				<p class="text-error text-sm">{errorMsg}</p>
-			{/if}
-
-			<button type="submit" class="btn btn-primary w-full" disabled={loading}>
-				{#if loading}
-					<span class="loading loading-spinner loading-sm"></span>
+				{#if resendSuccess}
+					<div class="flex items-center gap-2 px-1">
+						<CheckCircle2 size={14} class="text-success shrink-0" />
+						<span class="text-xs text-success">Email reenviado com sucesso!</span>
+					</div>
 				{/if}
-				{mode === 'login' ? 'Entrar' : 'Criar conta'}
-			</button>
-		</form>
 
-		<p class="text-sm text-center opacity-60">
-			{mode === 'login' ? 'Não tem conta?' : 'Já tem conta?'}
-			<button
-				class="link link-primary"
-				onclick={() => {
-					mode = mode === 'login' ? 'register' : 'login';
-					errorMsg = '';
-				}}
-			>
-				{mode === 'login' ? 'Criar conta' : 'Entrar'}
-			</button>
-		</p>
+				{#if errorMsg}
+					<div class="login-error">
+						<span class="text-xs">{errorMsg}</span>
+					</div>
+				{/if}
+
+				<button
+					type="button"
+					class="login-btn"
+					onclick={handleResend}
+					disabled={resendLoading || resendSuccess}
+				>
+					{#if resendLoading}
+						<Loader2 size={16} class="animate-spin" />
+					{:else}
+						<RotateCcw size={14} />
+					{/if}
+					{resendSuccess ? 'Email reenviado!' : 'Reenviar email de confirmação'}
+				</button>
+
+				<button
+					type="button"
+					class="w-full text-center text-xs text-base-content/40 hover:text-base-content/70 transition-colors py-1"
+					onclick={goBack}
+				>
+					← Voltar para o login
+				</button>
+			</div>
+
+		<!-- ── Login / Register Form ────────────────────── -->
+		{:else}
+			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+				<div class="form-group">
+					<label class="login-label" for="email">Email</label>
+					<input
+						id="email"
+						type="email"
+						class="login-input"
+						placeholder="seu@email.com"
+						bind:value={email}
+						required
+						autocomplete="email"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label class="login-label" for="password">Senha</label>
+					<input
+						id="password"
+						type="password"
+						class="login-input"
+						placeholder="••••••••"
+						bind:value={password}
+						required
+						autocomplete={step === 'login' ? 'current-password' : 'new-password'}
+					/>
+				</div>
+
+				{#if errorMsg}
+					<div class="login-error">
+						<span class="text-xs">{errorMsg}</span>
+					</div>
+				{/if}
+
+				<button type="submit" class="login-btn" disabled={loading}>
+					{#if loading}
+						<Loader2 size={16} class="animate-spin" />
+					{/if}
+					{step === 'login' ? 'Entrar' : 'Criar conta'}
+				</button>
+			</form>
+
+			<!-- Toggle mode -->
+			<p class="mt-6 text-center text-xs text-base-content/40">
+				{step === 'login' ? 'Sem conta?' : 'Já tem conta?'}
+				<button
+					class="ml-1 text-primary/70 hover:text-primary transition-colors underline underline-offset-2"
+					onclick={() => {
+						step = step === 'login' ? 'register' : 'login';
+						errorMsg = '';
+					}}
+				>
+					{step === 'login' ? 'Criar conta' : 'Entrar'}
+				</button>
+			</p>
+		{/if}
+
+		<!-- Footer -->
+		<div class="mt-8 flex items-center justify-center gap-2">
+			<div class="status-dot"></div>
+			<span class="text-[10px] uppercase tracking-widest text-base-content/20">Sistema online</span>
+		</div>
 	</div>
 </div>
+
+<style>
+	.login-bg {
+		background: var(--color-base-100);
+	}
+
+	.glow-orb {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(80px);
+		opacity: 0.12;
+	}
+
+	.glow-orb-1 {
+		width: 500px;
+		height: 500px;
+		background: #06b6d4;
+		top: -200px;
+		left: -150px;
+	}
+
+	.glow-orb-2 {
+		width: 400px;
+		height: 400px;
+		background: #8b5cf6;
+		bottom: -180px;
+		right: -100px;
+	}
+
+	.login-card {
+		position: relative;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(6, 182, 212, 0.15);
+		border-radius: 1.25rem;
+		padding: 2.5rem;
+		backdrop-filter: blur(24px);
+		-webkit-backdrop-filter: blur(24px);
+		box-shadow:
+			0 0 0 1px rgba(6, 182, 212, 0.05),
+			0 24px 64px rgba(0, 0, 0, 0.35),
+			0 0 40px rgba(6, 182, 212, 0.04) inset;
+	}
+
+	.login-icon-ring {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 52px;
+		height: 52px;
+		border-radius: 50%;
+		background: rgba(6, 182, 212, 0.1);
+		border: 1px solid rgba(6, 182, 212, 0.25);
+		box-shadow: 0 0 20px rgba(6, 182, 212, 0.12);
+	}
+
+	.form-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
+	}
+
+	.login-label {
+		font-size: 0.65rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: color-mix(in oklch, var(--color-base-content) 50%, transparent);
+	}
+
+	.login-input {
+		width: 100%;
+		padding: 0.625rem 0.875rem;
+		font-size: 0.875rem;
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(6, 182, 212, 0.18);
+		border-radius: 0.625rem;
+		color: var(--color-base-content);
+		outline: none;
+		transition: border-color 0.15s, box-shadow 0.15s;
+	}
+
+	.login-input::placeholder {
+		color: color-mix(in oklch, var(--color-base-content) 25%, transparent);
+	}
+
+	.login-input:focus {
+		border-color: rgba(6, 182, 212, 0.5);
+		box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.08);
+	}
+
+	.login-info-box {
+		padding: 1rem;
+		border-radius: 0.75rem;
+		background: rgba(6, 182, 212, 0.07);
+		border: 1px solid rgba(6, 182, 212, 0.2);
+	}
+
+	.login-error {
+		padding: 0.5rem 0.75rem;
+		border-radius: 0.5rem;
+		background: rgba(239, 68, 68, 0.08);
+		border: 1px solid rgba(239, 68, 68, 0.2);
+		color: #f87171;
+	}
+
+	.login-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.625rem 1rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		border-radius: 0.625rem;
+		background: rgba(6, 182, 212, 0.15);
+		border: 1px solid rgba(6, 182, 212, 0.35);
+		color: #06b6d4;
+		cursor: pointer;
+		transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
+		margin-top: 0.25rem;
+	}
+
+	.login-btn:hover:not(:disabled) {
+		background: rgba(6, 182, 212, 0.22);
+		box-shadow: 0 0 16px rgba(6, 182, 212, 0.15);
+	}
+
+	.login-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.status-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: #06b6d4;
+		box-shadow: 0 0 6px #06b6d4;
+		animation: pulse 2s infinite;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.4; }
+	}
+</style>

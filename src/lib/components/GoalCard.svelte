@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Goal, Milestone } from '$lib/types';
+	import type { Goal, Milestone } from '$lib';
 	import { Target, Flag, Trash2, CheckCircle2, Circle } from 'lucide-svelte';
 
 	let {
@@ -8,6 +8,7 @@
 		onToggleMilestone,
 		onDeleteGoal,
 		onDeleteMilestone,
+		pendingIds = new Set<string>(),
 		index = 0
 	}: {
 		goal: Goal;
@@ -15,6 +16,7 @@
 		onToggleMilestone: (milestoneId: string) => void;
 		onDeleteGoal: (goalId: string) => void;
 		onDeleteMilestone: (milestoneId: string) => void;
+		pendingIds?: Set<string>;
 		index?: number;
 	} = $props();
 
@@ -42,8 +44,13 @@
 			class="btn btn-ghost btn-xs text-error/50 hover:text-error rounded-full opacity-0 transition-opacity group-hover:opacity-100"
 			title="Deletar missão"
 			aria-label="Deletar missão"
+			disabled={pendingIds.has(goal.id)}
 		>
-			<Trash2 size={13} />
+			{#if pendingIds.has(goal.id)}
+				<span class="loading loading-spinner loading-xs"></span>
+			{:else}
+				<Trash2 size={13} />
+			{/if}
 		</button>
 	</div>
 
@@ -72,6 +79,7 @@
 					class="shrink-0 text-base-content/30 transition-colors hover:text-primary"
 					class:text-primary={milestone.completed}
 					aria-label="Alternar marco"
+					disabled={pendingIds.has(milestone.id)}
 				>
 					{#if milestone.completed}
 						<CheckCircle2 size={15} />
@@ -91,8 +99,13 @@
 					class="btn btn-ghost btn-xs text-error/40 hover:text-error rounded-full opacity-0 transition-opacity group-hover/ms:opacity-100 shrink-0 p-0 w-5 h-5 min-h-0"
 					title="Deletar marco"
 					aria-label="Deletar marco"
+					disabled={pendingIds.has(milestone.id)}
 				>
-					<Trash2 size={11} />
+					{#if pendingIds.has(milestone.id)}
+						<span class="loading loading-spinner loading-xs"></span>
+					{:else}
+						<Trash2 size={11} />
+					{/if}
 				</button>
 			</li>
 		{/each}
