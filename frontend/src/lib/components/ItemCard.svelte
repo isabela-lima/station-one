@@ -68,9 +68,7 @@
 		{#if item.type === 'task' && onTogglePriority}
 			<button
 				onclick={() => onTogglePriority?.(item.id)}
-				class="btn btn-ghost btn-xs rounded-full p-1"
-				class:text-warning={item.priority}
-				class:text-base-content/30={!item.priority}
+				class="btn btn-ghost btn-xs rounded-full p-1 {item.priority ? 'text-warning' : 'text-base-content/30'}"
 				title={item.priority ? 'Remover do foco' : 'Foco do dia'}
 				disabled={pending}
 			>
