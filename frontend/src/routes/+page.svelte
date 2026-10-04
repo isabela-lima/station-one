@@ -135,15 +135,20 @@
 	}
 
 	// ─── Handlers: Items ──────────────────────────────
+	// As ações abaixo são otimistas: a tela muda na hora e a API confirma em
+	// segundo plano. Se a API falhar, desfazemos e avisamos.
 	async function handleToggleItem(id: string) {
 		if (pendingIds.has(id)) return;
+		const item = items.find((i) => i.id === id);
+		if (!item) return;
+		const completed = !item.completed;
+		items = items.map((i) => (i.id === id ? { ...i, completed } : i));
 		setPending(id, true);
 		try {
-			const item = items.find((i) => i.id === id);
-			if (!item) return;
-			const updated = await api.items.update(id, { completed: !item.completed });
+			const updated = await api.items.update(id, { completed });
 			items = items.map((i) => (i.id === id ? updated : i));
 		} catch {
+			items = items.map((i) => (i.id === id ? { ...i, completed: item.completed } : i));
 			showToast('Erro ao atualizar item.', 'error');
 		} finally {
 			setPending(id, false);
@@ -152,12 +157,19 @@
 
 	async function handleDeleteItem(id: string) {
 		if (pendingIds.has(id)) return;
+		const index = items.findIndex((i) => i.id === id);
+		if (index === -1) return;
+		const removed = items[index];
+		items = items.filter((i) => i.id !== id);
 		setPending(id, true);
 		try {
 			await api.items.delete(id);
-			items = items.filter((i) => i.id !== id);
 			showToast('Operação removida.');
 		} catch {
+			// Devolve só o item removido (sem desfazer outras mudanças feitas no meio tempo)
+			const next = [...items];
+			next.splice(Math.min(index, next.length), 0, removed);
+			items = next;
 			showToast('Erro ao remover operação.', 'error');
 		} finally {
 			setPending(id, false);
@@ -166,14 +178,16 @@
 
 	async function handleTogglePriority(id: string) {
 		if (pendingIds.has(id)) return;
+		const item = items.find((i) => i.id === id);
+		if (!item) return;
+		const priority = !item.priority;
+		items = items.map((i) => (i.id === id ? { ...i, priority } : i));
 		setPending(id, true);
 		try {
-			const item = items.find((i) => i.id === id);
-			if (!item) return;
-			const updated = await api.items.update(id, { priority: !item.priority });
+			const updated = await api.items.update(id, { priority });
 			items = items.map((i) => (i.id === id ? updated : i));
-			showToast(item.priority ? 'Removido do foco.' : 'Marcado como foco!', 'info');
 		} catch {
+			items = items.map((i) => (i.id === id ? { ...i, priority: item.priority } : i));
 			showToast('Erro ao alterar prioridade.', 'error');
 		} finally {
 			setPending(id, false);
@@ -194,13 +208,16 @@
 	// ─── Handlers: Goals / Milestones ────────────────
 	async function handleToggleMilestone(milestoneId: string) {
 		if (pendingIds.has(milestoneId)) return;
+		const ms = milestones.find((m) => m.id === milestoneId);
+		if (!ms) return;
+		const completed = !ms.completed;
+		milestones = milestones.map((m) => (m.id === milestoneId ? { ...m, completed } : m));
 		setPending(milestoneId, true);
 		try {
-			const ms = milestones.find((m) => m.id === milestoneId);
-			if (!ms) return;
-			const updated = await api.milestones.update(milestoneId, { completed: !ms.completed });
+			const updated = await api.milestones.update(milestoneId, { completed });
 			milestones = milestones.map((m) => (m.id === milestoneId ? updated : m));
 		} catch {
+			milestones = milestones.map((m) => (m.id === milestoneId ? { ...m, completed: ms.completed } : m));
 			showToast('Erro ao atualizar marco.', 'error');
 		} finally {
 			setPending(milestoneId, false);
@@ -254,11 +271,18 @@
 	// ─── Handlers: Habits ─────────────────────────────
 	async function handleToggleHabit(id: string) {
 		if (pendingIds.has(id)) return;
+		const before = habits.find((h) => h.id === id);
+		if (!before) return;
+		const done = !before.completed_today;
+		habits = habits.map((h) =>
+			h.id === id ? { ...h, completed_today: done, streak: Math.max(0, h.streak + (done ? 1 : -1)) } : h
+		);
 		setPending(id, true);
 		try {
 			const updated = await api.habits.toggleToday(id);
 			habits = habits.map((h) => (h.id === id ? updated : h));
 		} catch {
+			habits = habits.map((h) => (h.id === id ? before : h));
 			showToast('Erro ao atualizar protocolo.', 'error');
 		} finally {
 			setPending(id, false);
@@ -379,17 +403,20 @@
 			timer = setInterval(updateDateTime, 1000);
 			initWeather();
 
-			const [fetchedItems, fetchedGoals, fetchedWishlist] = await Promise.all([
+			// Tudo em paralelo: cada requisição custa uma ida até o banco
+			const [fetchedItems, fetchedGoals, fetchedWishlist, fetchedMilestones, fetchedHabits] = await Promise.all([
 				api.items.list(),
 				api.goals.list(),
-				api.wishlist.list()
+				api.wishlist.list(),
+				api.milestones.list(),
+				api.habits.list()
 			]);
 
 			items = fetchedItems;
 			goals = fetchedGoals;
 			wishlist = fetchedWishlist;
-			milestones = fetchedGoals.length > 0 ? await api.milestones.list() : [];
-			habits = await api.habits.list();
+			milestones = fetchedMilestones;
+			habits = fetchedHabits;
 		} catch {
 			showToast('Erro ao carregar dados. Verifique sua conexão.', 'error');
 		} finally {

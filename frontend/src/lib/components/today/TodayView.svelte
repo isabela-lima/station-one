@@ -29,9 +29,19 @@
 
 	// ─── Operações ────────────────────────────────────
 	const tasks = $derived(items.filter((i) => i.type === 'task'));
+	// Tarefas concluídas aqui continuam visíveis (riscadas) até sair da tela,
+	// para dar para ver o que foi feito e desfazer um clique errado.
+	let justDone = $state<Set<string>>(new Set());
+	function toggleTask(id: string, completed: boolean) {
+		const next = new Set(justDone);
+		if (completed) next.delete(id);
+		else next.add(id);
+		justDone = next;
+		onToggleItem(id);
+	}
 	const openTasks = $derived(
 		tasks
-			.filter((t) => !t.completed)
+			.filter((t) => !t.completed || justDone.has(t.id))
 			.sort((a, b) => Number(b.priority) - Number(a.priority))
 			.slice(0, 6)
 	);
@@ -92,15 +102,18 @@
 		{:else}
 			<ul class="flex flex-col gap-2">
 				{#each openTasks as t (t.id)}
-					<li class="task">
+					<li class="task" class:done={t.completed}>
 						<button
 							type="button"
 							class="tick"
-							aria-label="Concluir {t.content}"
-							disabled={pendingIds.has(t.id)}
-							onclick={() => onToggleItem(t.id)}
-						></button>
-						<span class="flex-1 min-w-0 break-words">{t.content}</span>
+							aria-label={t.completed ? `Desfazer ${t.content}` : `Concluir ${t.content}`}
+							aria-pressed={t.completed}
+							aria-busy={pendingIds.has(t.id)}
+							onclick={() => toggleTask(t.id, t.completed)}
+						>
+							{#if t.completed}<Check size={14} strokeWidth={3.5} />{/if}
+						</button>
+						<span class="task-text flex-1 min-w-0 break-words">{t.content}</span>
 						{#if t.priority}
 							<Star size={15} fill="currentColor" style="color: var(--c-protocols)" aria-label="Foco" />
 						{/if}
@@ -158,7 +171,7 @@
 						class:done={h.completed_today}
 						aria-pressed={h.completed_today}
 						aria-label="{h.name}: {h.streak} {h.streak === 1 ? 'dia' : 'dias'} de streak{h.completed_today ? ', feito hoje' : ''}"
-						disabled={pendingIds.has(h.id)}
+						aria-busy={pendingIds.has(h.id)}
 						onclick={() => onToggleHabit(h.id)}
 					>
 						<span class="flex w-full items-center justify-between">
@@ -296,6 +309,9 @@
 		font-weight: 500;
 	}
 	.tick {
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		width: 24px;
 		height: 24px;
 		flex-shrink: 0;
@@ -304,12 +320,21 @@
 		cursor: pointer;
 		transition: border-color 0.15s ease, background 0.15s ease;
 	}
-	.tick:hover:not(:disabled) {
+	.tick:hover {
 		border-color: var(--sec);
 		background: var(--sec-soft);
 	}
-	.tick:disabled {
-		opacity: 0.4;
+	.task.done .tick {
+		border-color: var(--sec);
+		background: var(--sec);
+		color: var(--color-base-100);
+	}
+	.task-text {
+		transition: color 0.2s ease;
+	}
+	.task.done .task-text {
+		text-decoration: line-through;
+		color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
 	}
 
 
@@ -367,10 +392,10 @@
 		cursor: pointer;
 		transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 	}
-	.habit:hover:not(:disabled) {
+	.habit:hover {
 		border-color: var(--sec);
 	}
-	.habit:active:not(:disabled) {
+	.habit:active {
 		transform: scale(0.97);
 	}
 	.habit.done {
@@ -379,8 +404,9 @@
 		background: var(--sec-soft);
 		color: var(--sec-ink);
 	}
-	.habit:disabled {
-		opacity: 0.6;
+	.habit[aria-busy='true'],
+	.tick[aria-busy='true'] {
+		cursor: progress;
 	}
 	.streak {
 		font-family: var(--font-display);
