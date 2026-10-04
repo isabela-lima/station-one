@@ -25,6 +25,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 		...options,
 		headers: {
 			'Content-Type': 'application/json',
+			// A API usa isso para saber qual é o "hoje" do usuário (hábitos, log diário)
+			'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
 			...options.headers
 		}

@@ -39,9 +39,10 @@ Toda chamada ao FastAPI passa o JWT do Supabase no header `Authorization: Bearer
 ### Fluxo de dados no dashboard (`src/routes/+page.svelte`)
 
 1. `onMount` → busca todos os dados via `api.*` em paralelo com `Promise.all`
-2. Supabase realtime via `postgres_changes` mantém sincronização ao vivo para `items`, `goals`, `milestones`, `wishlist`, `habits`
-3. Todo estado é Svelte 5 `$state` — sem stores externos exceto `toasts` (writable store em `toast.ts`)
-4. `onDestroy` limpa todas as subscriptions do Supabase
+2. Supabase realtime via `postgres_changes` mantém sincronização ao vivo para `items`, `goals`, `milestones`, `wishlist` (aplicando a linha do evento) e `habits`/`habit_completions` (refetch via API, porque `streak`/`completed_today` são calculados no backend)
+3. Toda chamada à API envia `X-Timezone` — o backend usa para saber o "hoje" do usuário (dependência `Today` em `api/deps.py`)
+4. Todo estado é Svelte 5 `$state` — sem stores externos exceto `toasts` (writable store em `toast.ts`)
+5. `onDestroy` limpa todas as subscriptions do Supabase
 
 ### Formulário unificado
 

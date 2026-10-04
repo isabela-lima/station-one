@@ -1,10 +1,9 @@
-from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, status
 from sqlalchemy import select
 
-from deps import CurrentUser, DB
+from deps import CurrentUser, DB, Today
 from models.daily_log import DailyLog
 from schemas.daily_log import DailyLogOut, DailyLogUpdate
 
@@ -12,10 +11,9 @@ router = APIRouter(prefix="/daily-logs", tags=["daily-logs"])
 
 
 @router.get("/today", response_model=DailyLogOut)
-async def get_today_log(user_id: CurrentUser, db: DB):
+async def get_today_log(user_id: CurrentUser, db: DB, today: Today):
     """Retorna o log de hoje, criando um vazio se não existir."""
     uid = UUID(user_id)
-    today = date.today()
 
     result = await db.execute(
         select(DailyLog).where(DailyLog.user_id == uid, DailyLog.date == today)
@@ -32,10 +30,9 @@ async def get_today_log(user_id: CurrentUser, db: DB):
 
 
 @router.patch("/today", response_model=DailyLogOut)
-async def update_today_log(user_id: CurrentUser, db: DB, body: DailyLogUpdate):
+async def update_today_log(user_id: CurrentUser, db: DB, today: Today, body: DailyLogUpdate):
     """Atualiza (ou cria) o log de hoje com o novo conteúdo."""
     uid = UUID(user_id)
-    today = date.today()
 
     result = await db.execute(
         select(DailyLog).where(DailyLog.user_id == uid, DailyLog.date == today)

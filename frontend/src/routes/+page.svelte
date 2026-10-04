@@ -263,6 +263,20 @@
 		}
 	}
 
+	// Um toggle gera vários eventos realtime seguidos — agrupa num único refetch
+	let habitsRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+	function scheduleHabitsRefresh() {
+		if (habitsRefreshTimer) clearTimeout(habitsRefreshTimer);
+		habitsRefreshTimer = setTimeout(async () => {
+			habitsRefreshTimer = null;
+			try {
+				habits = await api.habits.list();
+			} catch {
+				/* silencioso — o próximo evento ou reload resolve */
+			}
+		}, 300);
+	}
+
 	// ─── Form Submit (dispatched from AddForm) ────────────
 
 	async function handleFormSubmit(payload: FormPayload) {
@@ -408,21 +422,16 @@
 					wishlist = wishlist.filter((w) => w.id !== old.id);
 				}
 			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'habits' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if (!habits.some((h) => h.id === (rec as Habit).id))
-						habits = [...habits, rec as Habit];
-				} else if (eventType === 'UPDATE') {
-					habits = habits.map((h) => (h.id === rec.id ? (rec as Habit) : h));
-				} else if (eventType === 'DELETE') {
-					habits = habits.filter((h) => h.id !== old.id);
-				}
-			})
+			// Hábitos: a linha crua do banco não tem streak/completed_today (calculados
+			// na API), então em vez de aplicar o evento direto, recarregamos a lista.
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'habits' }, scheduleHabitsRefresh)
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'habit_completions' }, scheduleHabitsRefresh)
 			.subscribe();
 	});
 
 	onDestroy(() => {
 		if (timer) clearInterval(timer);
+		if (habitsRefreshTimer) clearTimeout(habitsRefreshTimer);
 		if (realtimeChannel) supabase.removeChannel(realtimeChannel);
 	});
 

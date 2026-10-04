@@ -11,10 +11,12 @@ is performed with freshly fetched keys before returning 401.
 """
 
 import time
+from datetime import date, datetime
 from typing import Annotated, Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import httpx
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import ExpiredSignatureError, JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -127,7 +129,32 @@ def get_current_user_id(
     return user_id
 
 
+# ─── User's timezone / local date ─────────────────────────────────────────────
+
+def get_user_tz(
+    x_timezone: Annotated[Optional[str], Header()] = None,
+) -> Optional[ZoneInfo]:
+    """
+    Fuso do usuário (header X-Timezone, ex: "America/Sao_Paulo").
+    None quando ausente ou inválido — aí vale o relógio do servidor.
+    """
+    if x_timezone:
+        try:
+            return ZoneInfo(x_timezone)
+        except (ZoneInfoNotFoundError, ValueError):
+            pass
+    return None
+
+
+def get_user_today(
+    tz: Annotated[Optional[ZoneInfo], Depends(get_user_tz)],
+) -> date:
+    """"Hoje" no fuso do usuário."""
+    return datetime.now(tz).date() if tz else date.today()
+
+
 # ─── Convenience type aliases ─────────────────────────────────────────────────
 
 CurrentUser = Annotated[str, Depends(get_current_user_id)]
 DB = Annotated[AsyncSession, Depends(get_db)]
+Today = Annotated[date, Depends(get_user_today)]
