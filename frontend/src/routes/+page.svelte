@@ -6,7 +6,7 @@
 	import { supabase } from '$lib/supabase';
 	import * as api from '$lib/api';
 	import { showToast } from '$lib/toast';
-	import type { Goal, Habit, Item, Milestone, WishlistItem, Section, FormType, FormPayload } from '$lib';
+	import type { Goal, Habit, Item, Milestone, WishlistItem, Section, CreatableSection, FormType, FormPayload } from '$lib';
 
 	// ── Components ───────────────────────────────────────
 	import GoalCard from '$lib/components/GoalCard.svelte';
@@ -14,13 +14,13 @@
 	import ItemCard from '$lib/components/ItemCard.svelte';
 	import WishlistCard from '$lib/components/WishlistCard.svelte';
 	import Toast from '$lib/components/Toast.svelte';
-	import DailyLog from '$lib/components/DailyLog.svelte';
-	import AppSidebar from '$lib/components/dashboard/AppSidebar.svelte';
-	import MobileNav from '$lib/components/dashboard/MobileNav.svelte';
-	import MobileSheet from '$lib/components/dashboard/MobileSheet.svelte';
+	import AppHeader from '$lib/components/dashboard/AppHeader.svelte';
+	import CreateDialog from '$lib/components/dashboard/CreateDialog.svelte';
+	import { SECTIONS, sectionColor } from '$lib/components/dashboard/types';
+	import TodayView from '$lib/components/today/TodayView.svelte';
 	import FinanceDashboard from '$lib/components/finance/FinanceDashboard.svelte';
 
-	import { FlameKindling, Zap, Target, ShoppingBag, Star, Trash2, Satellite } from 'lucide-svelte';
+	import { FlameKindling, Zap, Target, ShoppingBag, Trash2, Flame } from 'lucide-svelte';
 
 	// ─── State ────────────────────────────────────────
 	let items = $state<Item[]>([]);
@@ -31,8 +31,10 @@
 
 	let currentDate = $state('');
 	let currentTime = $state('');
+	let greeting = $state('Olá');
 	let loading = $state(true);
 	let userName = $state('');
+	let profileName = $state<string | null>(null);
 
 	// ─── Weather ──────────────────────────────────────
 	interface WeatherInfo { temp: number; emoji: string; }
@@ -84,16 +86,35 @@
 		);
 	}
 
-	let activeSection = $state<Section>('operations');
+	let activeSection = $state<Section>('today');
 	let selectedType = $state<FormType>('task');
-	let showMobileForm = $state(false);
+	let createOpen = $state(false);
+	let createKind = $state<CreatableSection>('operations');
+
+	const DEFAULT_TYPE: Record<CreatableSection, FormType> = {
+		operations: 'task',
+		missions: 'goal',
+		protocols: 'habit',
+		finance: 'transaction',
+		wishlist: 'wishlist'
+	};
+
+	/** Abre o formulário já no tipo da seção atual (Hoje → Operação) */
+	function openCreate() {
+		createKind = activeSection === 'today' ? 'operations' : activeSection;
+		selectedType = DEFAULT_TYPE[createKind];
+		createOpen = true;
+	}
 
 	/** IDs de itens com ação em andamento (delete, toggle) */
 	let pendingIds = $state<Set<string>>(new Set());
 
 	// ─── Derived ──────────────────────────────────────
-	const focusItems = $derived(items.filter((i) => i.type === 'task' && i.priority && !i.completed));
 	const completedTasks = $derived(items.filter((i) => i.type === 'task' && i.completed));
+	/** Nome para a saudação: só o primeiro nome do perfil; sem nome no perfil, "Comandante" */
+	const firstName = $derived(profileName?.trim().split(/\s+/)[0] || 'Comandante');
+	const topStreak = $derived(habits.reduce((max, h) => Math.max(max, h.streak), 0));
+	const currentSection = $derived(SECTIONS.find((s) => s.id === activeSection)!);
 	const initials = $derived(
 		userName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
 	);
@@ -101,17 +122,12 @@
 	// ─── Date / Time ──────────────────────────────────
 	function updateDateTime() {
 		const now = new Date();
-		currentDate = now.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-		currentTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+		const d = now.toLocaleDateString('pt-BR', { weekday: 'long', month: 'long', day: 'numeric' });
+		currentDate = d.charAt(0).toUpperCase() + d.slice(1);
+		currentTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+		const h = now.getHours();
+		greeting = h < 5 ? 'Boa noite' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 	}
-
-	// ─── Auto-select form type on section change ────────────────────────
-	$effect(() => {
-		if (activeSection === 'operations') selectedType = 'task';
-		else if (activeSection === 'missions') selectedType = 'goal';
-		else if (activeSection === 'wishlist') selectedType = 'wishlist';
-		else if (activeSection === 'protocols') selectedType = 'habit';
-	});
 
 	// ─── Helpers ──────────────────────────────────────
 	function setPending(id: string, on: boolean) {
@@ -357,7 +373,8 @@
 			const { data: { session } } = await supabase.auth.getSession();
 			if (!session) { goto('/login'); return; }
 
-			userName = session.user.user_metadata?.name ?? session.user.email?.split('@')[0] ?? 'Astronauta';
+			profileName = session.user.user_metadata?.name ?? null;
+			userName = profileName ?? session.user.email?.split('@')[0] ?? 'Astronauta';
 			updateDateTime();
 			timer = setInterval(updateDateTime, 1000);
 			initWeather();
@@ -449,100 +466,79 @@
 </script>
 
 <!-- ─── Layout ─────────────────────────────────────────── -->
-<div class="h-screen flex flex-col lg:flex-row font-sans overflow-hidden">
+<div class="mx-auto flex min-h-screen w-full max-w-[1320px] flex-col gap-6 px-4 pt-5 pb-12 sm:px-7 sm:pt-7">
+	<AppHeader bind:activeSection {userName} {initials} onCreate={openCreate} onLogout={handleLogout} />
 
-	<main class="flex-1 flex flex-col overflow-y-auto pb-20 lg:pb-0">
-
-		<!-- Header -->
-		<header class="flex items-end justify-between px-8 pt-6 pb-4">
-			<div class="flex items-center gap-3">
-				<div class="flex h-9 w-9 items-center justify-center rounded-full" style="background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.25)">
-					<Satellite size={18} class="text-primary" />
-				</div>
-				<div>
-					<div class="text-xs font-medium tracking-widest uppercase text-primary/60">Station One</div>
-					<div class="flex items-center gap-2">
-						<span class="text-xs text-base-content/30 capitalize">{currentDate}</span>
-						{#if weather}
-							<span
-								class="weather-badge"
-								title="Clima atual"
-							>
-								{weather.emoji} {weather.temp}°C
-							</span>
-						{/if}
-					</div>
-				</div>
+	{#if activeSection === 'today'}
+		<!-- Hero -->
+		<section class="flex flex-wrap items-end justify-between gap-4 px-1">
+			<div class="flex flex-col gap-2">
+				<p class="text-sm font-semibold text-base-content/70">
+					{currentDate}{#if weather} · {weather.emoji} {weather.temp}°C{/if}
+				</p>
+				<h1 class="font-display hero-title">{greeting}, {firstName}.</h1>
 			</div>
-			<div class="clock-display text-5xl lg:text-6xl font-bold leading-none">{currentTime}</div>
-		</header>
-
-		<!-- Daily Log da Estação -->
-		<DailyLog />
-
-		<!-- Focus banner -->
-		{#if focusItems.length > 0}
-			<section class="px-8 pb-4">
-				<div class="rounded-xl p-4" style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2)">
-					<div class="mb-3 flex items-center gap-2">
-						<Star size={14} class="text-warning" fill="currentColor" />
-						<span class="text-xs font-semibold uppercase tracking-widest text-warning/80">Foco de Hoje</span>
-					</div>
-					<div class="space-y-2">
-						{#each focusItems as item (item.id)}
-							<label class="flex cursor-pointer items-center gap-3">
-								<input type="checkbox" class="checkbox checkbox-sm border-primary/40 checked:border-primary checked:bg-primary" checked={item.completed} onchange={() => handleToggleItem(item.id)} disabled={pendingIds.has(item.id)} />
-								<span class="text-sm font-medium">{item.content}</span>
-							</label>
-						{/each}
-					</div>
+			<div class="flex flex-wrap gap-3">
+				<div class="hero-stat">
+					<span class="hero-stat-value font-mono-num">{currentTime}</span>
+					<span class="hero-stat-label">agora</span>
 				</div>
-			</section>
-		{/if}
-
-		<!-- ── Section: Operações ───────────────────────── -->
-		{#if activeSection === 'operations'}
-			<section class="flex-1 px-6 pb-6">
-				<div class="mb-2 flex items-center justify-between px-1">
-					<div class="flex items-center gap-2">
-						<Zap size={14} class="text-primary" />
-						<h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40">Operações</h2>
-						<span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(6,182,212,0.12); color: #06b6d4">{items.length}</span>
+				{#if topStreak > 0}
+					<div class="hero-stat sec-protocols streak-stat">
+						<span class="hero-stat-value flex items-center gap-2">
+							<Flame size={24} fill="currentColor" />{topStreak} {topStreak === 1 ? 'dia' : 'dias'}
+						</span>
+						<span class="hero-stat-label">maior streak ativo</span>
 					</div>
-					{#if completedTasks.length > 0}
-						<button onclick={handleClearCompleted} class="btn btn-ghost btn-xs gap-1 text-base-content/30 hover:text-error">
-							<Trash2 size={11} />
-							Limpar concluídas ({completedTasks.length})
-						</button>
-					{/if}
-				</div>
+				{/if}
+			</div>
+		</section>
 
+		<TodayView
+			{items}
+			{habits}
+			{goals}
+			{milestones}
+			{loading}
+			{pendingIds}
+			onToggleItem={handleToggleItem}
+			onToggleHabit={handleToggleHabit}
+			onOpenSection={(sec) => (activeSection = sec)}
+		/>
+	{:else}
+		<!-- Página de seção -->
+		<section class="tile sec-{sectionColor(activeSection)} flex flex-col gap-5">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<h1 class="font-display flex items-center gap-3 text-2xl sm:text-3xl">
+					<currentSection.Icon size={26} style="color: var(--sec)" />
+					{currentSection.label}
+				</h1>
+				{#if activeSection === 'operations' && completedTasks.length > 0}
+					<button onclick={handleClearCompleted} class="btn btn-ghost btn-sm gap-1.5 text-base-content/70 hover:text-error">
+						<Trash2 size={14} />
+						Limpar concluídas ({completedTasks.length})
+					</button>
+				{/if}
+			</div>
+
+			{#if activeSection === 'operations'}
 				{#if loading}
-					<div class="space-y-1">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-8 w-full rounded-lg" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-2">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-10 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
 				{:else}
 					<div class="space-y-0.5">
 						{#each items as item, i (item.id)}
 							<ItemCard {item} index={i} pending={pendingIds.has(item.id)} onToggle={handleToggleItem} onDelete={handleDeleteItem} onTogglePriority={handleTogglePriority} />
 						{/each}
 						{#if items.length === 0}
-							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
+							<div class="empty-state">
 								<Zap size={28} />
-								<p class="text-sm text-center">Nenhuma operação ainda.<br />Adicione uma pela barra lateral.</p>
+								<p>Nenhuma operação ainda.<br />Use o botão <strong>Novo</strong> para criar.</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
-			</section>
 
-		<!-- ── Section: Missões ─────────────────────────── -->
-		{:else if activeSection === 'missions'}
-			<section class="flex-1 px-8 pb-8">
-				<div class="mb-4 flex items-center gap-2">
-					<Target size={16} class="text-secondary" />
-					<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Missões</h2>
-					<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(139,92,246,0.15); color: #8b5cf6">{goals.length}</span>
-				</div>
-
+			{:else if activeSection === 'missions'}
 				{#if loading}
 					<div class="space-y-3">{#each [1, 2] as i (i)}<div class="skeleton-pulse h-28 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
 				{:else}
@@ -551,56 +547,32 @@
 							<GoalCard {goal} index={i} milestones={milestonesForGoal(goal.id)} {pendingIds} onToggleMilestone={handleToggleMilestone} onDeleteGoal={handleDeleteGoal} onDeleteMilestone={handleDeleteMilestone} />
 						{/each}
 						{#if goals.length === 0}
-							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
-								<Target size={32} />
-								<p class="text-sm text-center">Nenhuma missão ainda.<br />Defina seus objetivos de longo prazo.</p>
+							<div class="empty-state">
+								<Target size={28} />
+								<p>Nenhuma missão ainda.<br />Defina seus objetivos de longo prazo.</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
-			</section>
 
-		<!-- ── Section: Protocolos ────────────────────── -->
-		{:else if activeSection === 'protocols'}
-			<section class="flex-1 px-8 pb-8">
-				<div class="mb-4 flex items-center gap-2">
-					<FlameKindling size={16} style="color: rgb(251,146,60)" />
-					<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Protocolos</h2>
-					<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(251,146,60,0.12); color: rgb(251,146,60)">{habits.length}</span>
-				</div>
-
+			{:else if activeSection === 'protocols'}
 				{#if loading}
 					<div class="space-y-3">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-20 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
 				{:else}
 					<div class="space-y-3">
 						{#each habits as habit (habit.id)}
-							<HabitCard
-								{habit}
-								pending={pendingIds.has(habit.id)}
-								onToggle={handleToggleHabit}
-								onDelete={handleDeleteHabit}
-							/>
+							<HabitCard {habit} pending={pendingIds.has(habit.id)} onToggle={handleToggleHabit} onDelete={handleDeleteHabit} />
 						{/each}
 						{#if habits.length === 0}
-							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
-								<FlameKindling size={32} />
-								<p class="text-sm text-center">Nenhum protocolo ainda.<br />Construa seus hábitos diários.</p>
+							<div class="empty-state">
+								<FlameKindling size={28} />
+								<p>Nenhum protocolo ainda.<br />Construa seus hábitos diários.</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
-			</section>
 
-		<!-- ── Section: Wishlist ────────────────────────── -->
-		{:else if activeSection === 'wishlist'}
-
-			<section class="flex-1 px-8 pb-8">
-				<div class="mb-4 flex items-center gap-2">
-					<ShoppingBag size={16} class="text-accent" />
-					<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Wishlist</h2>
-					<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(34,211,238,0.12); color: #22d3ee">{wishlist.length}</span>
-				</div>
-
+			{:else if activeSection === 'wishlist'}
 				{#if loading}
 					<div class="space-y-3">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-20 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
 				{:else}
@@ -609,41 +581,67 @@
 							<WishlistCard {wishlistItem} index={i} pending={pendingIds.has(wishlistItem.id)} onDelete={handleDeleteWishlist} />
 						{/each}
 						{#if wishlist.length === 0}
-							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
-								<ShoppingBag size={32} />
-								<p class="text-sm text-center">Wishlist vazia.<br />Cole uma URL para adicionar itens.</p>
+							<div class="empty-state">
+								<ShoppingBag size={28} />
+								<p>Wishlist vazia.<br />Cole uma URL para adicionar itens.</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
-			</section>
 
-		<!-- ── Section: Financeiro ────────────────────────── -->
-		{:else if activeSection === 'finance'}
-			<FinanceDashboard />
-		{/if}
-
-	</main>
-
-	<AppSidebar
-		{userName}
-		{initials}
-		bind:activeSection
-		bind:selectedType
-		{goals}
-		onLogout={handleLogout}
-		onSubmit={handleFormSubmit}
-	/>
+			{:else if activeSection === 'finance'}
+				<FinanceDashboard />
+			{/if}
+		</section>
+	{/if}
 </div>
 
-<MobileNav bind:activeSection bind:showMobileForm />
-
-<MobileSheet
-	bind:show={showMobileForm}
-	{activeSection}
-	bind:selectedType
-	{goals}
-	onSubmit={handleFormSubmit}
-/>
+<CreateDialog bind:open={createOpen} bind:kind={createKind} bind:selectedType {goals} onSubmit={handleFormSubmit} />
 
 <Toast />
+
+<style>
+	.hero-title {
+		margin: 0;
+		font-size: var(--hero-size);
+		line-height: 1.05;
+	}
+	.hero-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 14px 18px;
+		border-radius: var(--tile-radius);
+		background: var(--color-base-200);
+		border: var(--tile-border);
+		box-shadow: var(--tile-shadow);
+	}
+	.hero-stat-value {
+		font-family: var(--font-display);
+		font-weight: var(--display-weight);
+		font-size: 30px;
+		line-height: 1;
+	}
+	.hero-stat-label {
+		font-size: 13px;
+		color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+	}
+	.streak-stat {
+		background: var(--sec-soft);
+		color: var(--sec-ink);
+	}
+	.streak-stat .hero-stat-label {
+		color: inherit;
+		opacity: 0.85;
+	}
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+		padding: 48px 0;
+		text-align: center;
+		font-size: 14px;
+		color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+	}
+</style>

@@ -58,11 +58,11 @@
 
 	// ── Style constants ───────────────────────────────────
 	const S = {
-		cyan: 'background: rgba(255,255,255,0.04); border-color: rgba(6,182,212,0.15)',
-		violet: 'background: rgba(255,255,255,0.04); border-color: rgba(139,92,246,0.2)',
-		teal: 'background: rgba(255,255,255,0.04); border-color: rgba(34,211,238,0.2)',
-		blue: 'background: rgba(255,255,255,0.04); border-color: rgba(56,189,248,0.2)',
-		plain: 'background: rgba(255,255,255,0.04)'
+		cyan: 'background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border-color: color-mix(in oklab, var(--color-primary) 15%, transparent)',
+		violet: 'background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border-color: color-mix(in oklab, var(--color-secondary) 20%, transparent)',
+		teal: 'background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border-color: color-mix(in oklab, var(--color-primary) 20%, transparent)',
+		blue: 'background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border-color: color-mix(in oklab, var(--color-info) 20%, transparent)',
+		plain: 'background: color-mix(in oklab, var(--color-base-content) 4%, transparent)'
 	};
 
 	// ── Wishlist URL scraping ─────────────────────────────
@@ -194,14 +194,14 @@
 
 	{#if activeSection === 'operations'}
 		<!-- Type tabs -->
-		<div class="flex gap-1 rounded-lg p-1" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(6,182,212,0.08)">
+		<div class="flex gap-1 rounded-lg p-1" style="background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border: 1px solid color-mix(in oklab, var(--color-primary) 8%, transparent)">
 			{#each OPS_TYPES as opt (opt.v)}
 				<button
 					type="button"
 					onclick={() => (selectedType = opt.v)}
 					class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all duration-150"
 					style={selectedType === opt.v
-						? 'background: rgba(6,182,212,0.15); color: #06b6d4; border: 1px solid rgba(6,182,212,0.3)'
+						? 'background: color-mix(in oklab, var(--color-primary) 15%, transparent); color: var(--color-primary); border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent)'
 						: 'background: transparent; color: var(--color-base-content); opacity: 0.4; border: 1px solid transparent'}
 				>
 					<opt.Icon size={11} />
@@ -224,14 +224,14 @@
 
 	{:else if activeSection === 'missions'}
 		<!-- Type tabs -->
-		<div class="flex gap-1 rounded-lg p-1" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(139,92,246,0.1)">
+		<div class="flex gap-1 rounded-lg p-1" style="background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border: 1px solid color-mix(in oklab, var(--color-secondary) 10%, transparent)">
 			{#each MISSION_TYPES as opt (opt.v)}
 				<button
 					type="button"
 					onclick={() => (selectedType = opt.v)}
 					class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all duration-150"
 					style={selectedType === opt.v
-						? 'background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3)'
+						? 'background: color-mix(in oklab, var(--color-secondary) 15%, transparent); color: var(--color-secondary); border: 1px solid color-mix(in oklab, var(--color-secondary) 30%, transparent)'
 						: 'background: transparent; color: var(--color-base-content); opacity: 0.4; border: 1px solid transparent'}
 				>
 					<opt.Icon size={11} />
@@ -254,14 +254,14 @@
 
 	{:else if activeSection === 'finance'}
 		<!-- Type tabs -->
-		<div class="flex gap-1 rounded-lg p-1" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(56,189,248,0.1)">
+		<div class="flex gap-1 rounded-lg p-1" style="background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border: 1px solid color-mix(in oklab, var(--color-info) 10%, transparent)">
 			{#each FINANCE_TYPES as opt (opt.v)}
 				<button
 					type="button"
 					onclick={() => (selectedType = opt.v)}
 					class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all duration-150"
 					style={selectedType === opt.v
-						? 'background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3)'
+						? 'background: color-mix(in oklab, var(--color-info) 15%, transparent); color: var(--color-info); border: 1px solid color-mix(in oklab, var(--color-info) 30%, transparent)'
 						: 'background: transparent; color: var(--color-base-content); opacity: 0.4; border: 1px solid transparent'}
 				>
 					<opt.Icon size={11} />
@@ -304,7 +304,7 @@
 			<div class="flex items-center gap-2">
 				<input
 					class="input input-sm input-bordered w-16 text-center text-lg"
-					style="background: rgba(255,255,255,0.04); border-color: rgba(251,146,60,0.2)"
+					style="background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border-color: color-mix(in oklab, var(--c-protocols) 20%, transparent)"
 					type="text"
 					placeholder="⚡"
 					bind:value={habitEmoji}
@@ -312,7 +312,7 @@
 				/>
 				<input
 					class="input input-sm input-bordered flex-1"
-					style="background: rgba(255,255,255,0.04); border-color: rgba(251,146,60,0.2)"
+					style="background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border-color: color-mix(in oklab, var(--c-protocols) 20%, transparent)"
 					type="text"
 					placeholder="Ex: Meditar 10 minutos"
 					bind:value={habitName}
@@ -340,7 +340,7 @@
 		</div>
 
 		{#if wishlistPreview}
-			<div class="rounded-lg p-3 space-y-2" style="background: rgba(34,211,238,0.05); border: 1px solid rgba(34,211,238,0.15)">
+			<div class="rounded-lg p-3 space-y-2" style="background: color-mix(in oklab, var(--color-primary) 5%, transparent); border: 1px solid color-mix(in oklab, var(--color-primary) 15%, transparent)">
 				<p class="text-[10px] font-semibold uppercase tracking-widest text-accent/60">Preview</p>
 				{#if wishlistPreview.imageUrl}
 					<img src={wishlistPreview.imageUrl} alt="preview" class="h-24 w-full object-cover rounded-md" />
@@ -360,7 +360,7 @@
 	<button
 		type="submit"
 		class="btn btn-sm w-full font-semibold mt-1"
-		style="background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.35); color: #06b6d4"
+		style="background: color-mix(in oklab, var(--color-primary) 15%, transparent); border-color: color-mix(in oklab, var(--color-primary) 35%, transparent); color: var(--color-primary)"
 	>
 		<Plus size={14} />
 		{submitLabel}

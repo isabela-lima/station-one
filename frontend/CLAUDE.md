@@ -46,7 +46,7 @@ Toda chamada ao FastAPI passa o JWT do Supabase no header `Authorization: Bearer
 
 ### Formulário unificado
 
-`AddForm.svelte` é o único ponto de criação de qualquer entidade. O tipo é controlado pelo union discriminado `FormPayload` (`src/lib/components/dashboard/types.ts`). O dashboard recebe o payload via prop `onSubmit` e roteila para a API correta.
+`AddForm.svelte` é o único ponto de criação de qualquer entidade; ele é aberto pelo botão **Novo** dentro de `CreateDialog.svelte` (um `<dialog>` nativo, que vira folha inferior no celular). O tipo é controlado pelo union discriminado `FormPayload` (`src/lib/components/dashboard/types.ts`). O dashboard recebe o payload via prop `onSubmit` e roteila para a API correta.
 
 ```ts
 // FormPayload — sempre use o campo `kind` para discriminar
@@ -62,20 +62,30 @@ type FormPayload =
 
 ### Navegação/layout
 
-- **Desktop:** `AppSidebar` (fixo à direita) com nav entre seções + formulário dinâmico
-- **Mobile:** `MobileNav` (bottom bar) + `MobileSheet` (bottom sheet com formulário)
-- Seção ativa controlada pelo tipo `Section = 'operations' | 'missions' | 'wishlist' | 'finance' | 'protocols'`
+- `AppHeader` no topo: chips das seções (rolam na horizontal no celular), botão **Novo** e menu do avatar (tema + sair).
+- Seção ativa controlada pelo tipo `Section` (`'today' | 'operations' | ...`); a ordem, rótulo, ícone e cor de cada seção ficam em `SECTIONS` (`dashboard/types.ts`).
+- `today` é a tela inicial (`components/today/TodayView.svelte`): três colunas de tiles que empilham de forma independente. As outras seções são uma página com um único `.tile`.
 
 ## Design System
 
-**Tema DaisyUI customizado `station`** definido em `src/routes/layout.css`:
-- `base-100: #0a0a12` (fundo principal)
-- `primary: #06b6d4` (ciano)
-- `secondary: #8b5cf6` (roxo)
+**Três temas, um layout** — definidos em `src/routes/layout.css` e trocados pelo menu do avatar (`src/lib/theme.svelte.ts`; salvo no `localStorage` e aplicado antes do primeiro paint por um script em `app.html`):
+
+| Tema | Visual |
+|---|---|
+| `orbita` (padrão) | escuro, espacial, acento ciano |
+| `diario` | escuro, minimalista, acento lavanda |
+| `painel` | claro, cada seção com sua cor |
+
+**Nunca use cor fixa em componentes** — use os tokens, para funcionar nos três temas:
+- DaisyUI: `--color-base-100` (fundo), `--color-base-200` (tiles), `--color-base-300` (bordas), `--color-base-content`, `--color-primary`, etc.
+- Fontes: `--font-display` / `--font-body` / `--font-mono` (classes `.font-display`, `.font-mono-num`)
+- Cor por seção: `--c-<seção>`, `--c-<seção>-soft` (fundo), `--c-<seção>-ink` (texto sobre o soft). A classe `.sec-<seção>` (`sec-ops`, `sec-missions`, …) expõe a da seção como `--sec` / `--sec-soft` / `--sec-ink`.
+- Forma: `--tile-radius`, `--tile-pad`, `--radius-field`, `--radius-selector`
+- Nomes de classe que colidem com componentes do DaisyUI (`stat`, `hero`, `menu`, `card`…) herdam estilos dele — use outro nome.
 
 **Classes utilitárias locais:**
-- `.glass-card` — card glassmorphism base (use em todo card novo)
-- `.glass-sidebar` — variante para sidebar
+- `.tile` — bloco do layout (use com uma `.sec-*` para ganhar a cor da seção)
+- `.glass-card` — card interno de lista (nome legado; não tem mais glassmorphism)
 - `.card-enter` — animação de entrada com delay via `style="animation-delay: {index * 50}ms"`
 - `.skeleton-pulse` — loading skeleton
 

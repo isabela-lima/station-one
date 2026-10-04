@@ -33,12 +33,12 @@
 				src={wishlistItem.image_url}
 				alt={wishlistItem.title}
 				class="w-14 h-14 object-cover rounded-lg shrink-0 border"
-				style="border-color: rgba(6,182,212,0.15)"
+				style="border-color: color-mix(in oklab, var(--color-primary) 15%, transparent)"
 			/>
 		{:else}
 			<div
 				class="w-14 h-14 rounded-lg shrink-0 flex items-center justify-center"
-				style="background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.2)"
+				style="background: color-mix(in oklab, var(--color-secondary) 12%, transparent); border: 1px solid color-mix(in oklab, var(--color-secondary) 20%, transparent)"
 			>
 				<ShoppingBag size={20} class="text-secondary/60" />
 			</div>
@@ -87,7 +87,7 @@
 				{#if isGoodDeal && savings > 0}
 					<span
 						class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-						style="background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.3)"
+						style="background: color-mix(in oklab, var(--color-success) 12%, transparent); color: var(--color-success); border: 1px solid color-mix(in oklab, var(--color-success) 30%, transparent)"
 					>
 						<TrendingDown size={9} />
 						economiza {formatPrice(savings)}

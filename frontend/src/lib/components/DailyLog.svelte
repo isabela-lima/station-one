@@ -10,11 +10,8 @@
 	let loading = $state(true);
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const todayLabel = new Date().toLocaleDateString('pt-BR', {
-		weekday: 'long',
-		day: 'numeric',
-		month: 'long'
-	});
+	const rawLabel = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+	const todayLabel = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
 
 	// ── Load today's log ──────────────────────────────────
 	onMount(async () => {
@@ -47,53 +44,54 @@
 	}
 </script>
 
-<section class="px-8 pb-2">
-	<div class="daily-log-container rounded-xl p-4" style="background: rgba(255,255,255,0.025); border: 1px solid rgba(6,182,212,0.12)">
-
-		<!-- Header -->
-		<div class="mb-3 flex items-center justify-between">
-			<div class="flex items-center gap-2">
-				<BookOpen size={13} class="text-primary/60" />
-				<span class="text-[10px] font-semibold uppercase tracking-widest text-primary/50">
-					Log da Estação
-				</span>
-				<span class="text-[10px] text-base-content/25 capitalize">{todayLabel}</span>
-			</div>
-			<div class="flex items-center gap-1.5 h-4">
-				{#if saving}
-					<span class="text-[9px] uppercase tracking-widest text-base-content/25 animate-pulse">salvando...</span>
-				{:else if saved}
-					<Save size={10} class="text-success/60" />
-					<span class="text-[9px] uppercase tracking-widest text-success/50">salvo</span>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Textarea -->
-		{#if loading}
-			<div class="skeleton-pulse h-14 w-full rounded-lg"></div>
-		{:else}
-			<textarea
-				bind:value={content}
-				oninput={handleInput}
-				placeholder="O que aconteceu hoje, Comandante?"
-				class="daily-log-textarea w-full resize-none bg-transparent text-sm leading-relaxed text-base-content/70 placeholder:text-base-content/20 outline-none focus:rows-5 transition-all"
-				rows={2}
-			></textarea>
-		{/if}
+<div class="flex flex-col gap-3">
+	<div class="flex items-center justify-between gap-3">
+		<h2 class="font-display flex items-center gap-2 text-lg">
+			<BookOpen size={18} style="color: var(--sec, var(--color-primary))" />
+			Log da estação
+		</h2>
+		<span class="flex h-4 items-center gap-1.5 text-xs" aria-live="polite">
+			{#if saving}
+				<span class="text-base-content/60">salvando…</span>
+			{:else if saved}
+				<Save size={12} class="text-success" />
+				<span class="text-success">salvo</span>
+			{:else}
+				<span class="text-base-content/60">{todayLabel}</span>
+			{/if}
+		</span>
 	</div>
-</section>
+
+	{#if loading}
+		<div class="skeleton-pulse h-28 w-full"></div>
+	{:else}
+		<label for="daily-log" class="sr-only">Log de hoje</label>
+		<textarea
+			id="daily-log"
+			bind:value={content}
+			oninput={handleInput}
+			placeholder="O que aconteceu hoje, Comandante?"
+			class="daily-log-textarea w-full resize-y text-[15px] leading-relaxed outline-none"
+			rows={4}
+		></textarea>
+	{/if}
+</div>
 
 <style>
-	.daily-log-container {
-		transition: border-color 0.2s ease;
-	}
-	.daily-log-container:focus-within {
-		border-color: rgba(6, 182, 212, 0.28);
-		background: rgba(255, 255, 255, 0.035) !important;
-	}
 	.daily-log-textarea {
 		font-family: inherit;
-		caret-color: #06b6d4;
+		padding: 12px 14px;
+		border-radius: var(--radius-field);
+		background: var(--color-base-100);
+		border: 1px solid var(--color-base-300);
+		color: var(--color-base-content);
+		caret-color: var(--color-primary);
+		transition: border-color 0.15s ease;
+	}
+	.daily-log-textarea::placeholder {
+		color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+	}
+	.daily-log-textarea:focus {
+		border-color: var(--color-primary);
 	}
 </style>

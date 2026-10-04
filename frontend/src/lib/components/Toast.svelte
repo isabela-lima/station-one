@@ -7,10 +7,10 @@
 		<div
 			class="alert glass-card flex items-center gap-2 py-3 px-4 shadow-lg"
 			style="border-color: {toast.type === 'success'
-				? 'rgba(52,211,153,0.4)'
+				? 'color-mix(in oklab, var(--color-success) 40%, transparent)'
 				: toast.type === 'error'
-					? 'rgba(248,113,113,0.4)'
-					: 'rgba(6,182,212,0.4)'}; min-width: 240px; max-width: 340px"
+					? 'color-mix(in oklab, var(--color-error) 40%, transparent)'
+					: 'color-mix(in oklab, var(--color-primary) 40%, transparent)'}; min-width: 240px; max-width: 340px"
 		>
 			{#if toast.type === 'success'}
 				<svg

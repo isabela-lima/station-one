@@ -1,80 +1,228 @@
 @import 'tailwindcss';
-@plugin "daisyui";
 
+@plugin "daisyui" {
+	themes: false;
+}
+
+/*
+ * Três temas, um layout. Cada tema define:
+ *   • cores DaisyUI (base-100 = fundo, base-200 = tiles, base-300 = bordas)
+ *   • --font-display / --font-body / --font-mono
+ *   • cores por seção: --c-<seção> (forte), --c-<seção>-soft (fundo), --c-<seção>-ink (texto sobre soft)
+ *   • forma dos tiles: --tile-radius, --tile-pad, --tile-border, --tile-shadow, --tile-accent-w
+ * Componentes usam esses tokens — nunca cor fixa.
+ */
+
+/* ── A · Órbita — espacial, modernizado ─────────────────── */
 @plugin "daisyui/theme" {
-	name: "station";
+	name: "orbita";
 	default: true;
 	prefersdark: true;
 	color-scheme: "dark";
 
-	--color-base-100: #0a0a12;
-	--color-base-200: #0f0f1c;
-	--color-base-300: #161628;
-	--color-base-content: #e2e8f0;
-
-	--color-primary: #06b6d4;
-	--color-primary-content: #0a0a12;
-
+	--color-base-100: #0b0d14;
+	--color-base-200: #12151f;
+	--color-base-300: #1f2433;
+	--color-base-content: #e6e8ef;
+	--color-primary: #22d3ee;
+	--color-primary-content: #062430;
 	--color-secondary: #8b5cf6;
 	--color-secondary-content: #ffffff;
-
 	--color-accent: #22d3ee;
-	--color-accent-content: #0a0a12;
-
-	--color-neutral: #1e1e32;
-	--color-neutral-content: #a0aec0;
-
+	--color-accent-content: #062430;
+	--color-neutral: #1a1e2b;
+	--color-neutral-content: #a3a9ba;
 	--color-info: #38bdf8;
-	--color-info-content: #0a0a12;
-
+	--color-info-content: #0b0d14;
 	--color-success: #34d399;
-	--color-success-content: #0a0a12;
-
+	--color-success-content: #0b0d14;
 	--color-warning: #fbbf24;
-	--color-warning-content: #0a0a12;
-
+	--color-warning-content: #0b0d14;
 	--color-error: #f87171;
-	--color-error-content: #0a0a12;
+	--color-error-content: #0b0d14;
+	--radius-box: 0.875rem;
+	--radius-field: 0.625rem;
+	--radius-selector: 0.5rem;
+}
 
-	--radius-box: 0.75rem;
+/* ── B · Diário — minimalista, denso ────────────────────── */
+@plugin "daisyui/theme" {
+	name: "diario";
+	color-scheme: "dark";
+
+	--color-base-100: #0f0f10;
+	--color-base-200: #161618;
+	--color-base-300: #26262a;
+	--color-base-content: #ededef;
+	--color-primary: #a5b0ff;
+	--color-primary-content: #14162b;
+	--color-secondary: #a5b0ff;
+	--color-secondary-content: #14162b;
+	--color-accent: #a5b0ff;
+	--color-accent-content: #14162b;
+	--color-neutral: #1f1f22;
+	--color-neutral-content: #9a9aa2;
+	--color-info: #8ab4ff;
+	--color-info-content: #0f0f10;
+	--color-success: #7fd1a8;
+	--color-success-content: #0f0f10;
+	--color-warning: #f0a35e;
+	--color-warning-content: #0f0f10;
+	--color-error: #f08a8a;
+	--color-error-content: #0f0f10;
+	--radius-box: 0.625rem;
 	--radius-field: 0.5rem;
 	--radius-selector: 0.375rem;
 }
 
-/* ─── Background: espaço profundo com grid sutil ─── */
+/* ── C · Painel — claro, ousado, colorido ───────────────── */
+@plugin "daisyui/theme" {
+	name: "painel";
+	prefersdark: false;
+	color-scheme: "light";
+
+	--color-base-100: #eef0f4;
+	--color-base-200: #ffffff;
+	--color-base-300: #e1e5ee;
+	--color-base-content: #141828;
+	--color-primary: #2f5bea;
+	--color-primary-content: #ffffff;
+	--color-secondary: #7a3fe0;
+	--color-secondary-content: #ffffff;
+	--color-accent: #ff7a2f;
+	--color-accent-content: #2a1000;
+	--color-neutral: #141828;
+	--color-neutral-content: #ffffff;
+	--color-info: #2f5bea;
+	--color-info-content: #ffffff;
+	--color-success: #138a52;
+	--color-success-content: #ffffff;
+	--color-warning: #b45309;
+	--color-warning-content: #ffffff;
+	--color-error: #c8283c;
+	--color-error-content: #ffffff;
+	--radius-box: 1.375rem;
+	--radius-field: 0.875rem;
+	--radius-selector: 999px;
+}
+
+/* ── Tokens além do DaisyUI ─────────────────────────────── */
+[data-theme='orbita'] {
+	--font-display: 'Space Grotesk', system-ui, sans-serif;
+	--font-body: 'IBM Plex Sans', system-ui, sans-serif;
+	--font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+	--display-weight: 600;
+	--display-tracking: -0.02em;
+
+	--c-ops: #22d3ee;      --c-ops-soft: #0f2129;       --c-ops-ink: #67e8f9;
+	--c-missions: #8b5cf6; --c-missions-soft: #1b1630;  --c-missions-ink: #c4b5fd;
+	--c-protocols: #fb923c;--c-protocols-soft: #2a1a10; --c-protocols-ink: #fdba74;
+	--c-finance: #34d399;  --c-finance-soft: #0f2620;   --c-finance-ink: #6ee7b7;
+	--c-wishlist: #f472b6; --c-wishlist-soft: #2a1322;  --c-wishlist-ink: #f9a8d4;
+	--c-today: #e6e8ef;    --c-today-soft: #1a1e2b;     --c-today-ink: #e6e8ef;
+
+	--tile-radius: 14px;
+	--tile-pad: 20px;
+	--tile-border: 1px solid #1f2433;
+	--tile-shadow: none;
+	--tile-accent-w: 0px;
+	--hero-size: 2.25rem;
+}
+
+[data-theme='diario'] {
+	--font-display: 'Geist', system-ui, sans-serif;
+	--font-body: 'Geist', system-ui, sans-serif;
+	--font-mono: 'Geist Mono', ui-monospace, monospace;
+	--display-weight: 600;
+	--display-tracking: -0.02em;
+
+	/* Minimalista: seções não ganham cor própria, só o acento */
+	--c-ops: #a5b0ff;      --c-ops-soft: #1a1a1d;       --c-ops-ink: #ededef;
+	--c-missions: #a5b0ff; --c-missions-soft: #1a1a1d;  --c-missions-ink: #ededef;
+	--c-protocols: #f0a35e;--c-protocols-soft: #1a1a1d; --c-protocols-ink: #ededef;
+	--c-finance: #a5b0ff;  --c-finance-soft: #1a1a1d;   --c-finance-ink: #ededef;
+	--c-wishlist: #a5b0ff; --c-wishlist-soft: #1a1a1d;  --c-wishlist-ink: #ededef;
+	--c-today: #ededef;    --c-today-soft: #26262a;     --c-today-ink: #ededef;
+
+	--tile-radius: 10px;
+	--tile-pad: 16px;
+	--tile-border: 1px solid #1f1f22;
+	--tile-shadow: none;
+	--tile-accent-w: 0px;
+	--hero-size: 1.875rem;
+}
+
+[data-theme='painel'] {
+	--font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+	--font-body: 'Figtree', system-ui, sans-serif;
+	--font-mono: 'Figtree', system-ui, sans-serif;
+	--display-weight: 800;
+	--display-tracking: -0.03em;
+
+	--c-ops: #2f5bea;      --c-ops-soft: #dfe6ff;       --c-ops-ink: #1f45c7;
+	--c-missions: #7a3fe0; --c-missions-soft: #ece3ff;  --c-missions-ink: #5b2bb8;
+	--c-protocols: #ff7a2f;--c-protocols-soft: #ffe6d6; --c-protocols-ink: #a8410b;
+	--c-finance: #138a52;  --c-finance-soft: #d9f2e4;   --c-finance-ink: #0e6b3e;
+	--c-wishlist: #e0336f; --c-wishlist-soft: #ffe1ea;  --c-wishlist-ink: #a3184a;
+	--c-today: #141828;    --c-today-soft: #141828;     --c-today-ink: #ffffff;
+
+	--tile-radius: 22px;
+	--tile-pad: 24px;
+	--tile-border: 0 solid transparent;
+	--tile-shadow: 0 1px 2px rgba(20, 24, 40, 0.06);
+	--tile-accent-w: 6px;
+	--hero-size: 3.5rem;
+}
+
+/* Seção ativa de um bloco: .sec-ops etc. expõem --sec / --sec-soft / --sec-ink */
+.sec-today { --sec: var(--c-today); --sec-soft: var(--c-today-soft); --sec-ink: var(--c-today-ink); }
+.sec-ops { --sec: var(--c-ops); --sec-soft: var(--c-ops-soft); --sec-ink: var(--c-ops-ink); }
+.sec-missions { --sec: var(--c-missions); --sec-soft: var(--c-missions-soft); --sec-ink: var(--c-missions-ink); }
+.sec-protocols { --sec: var(--c-protocols); --sec-soft: var(--c-protocols-soft); --sec-ink: var(--c-protocols-ink); }
+.sec-finance { --sec: var(--c-finance); --sec-soft: var(--c-finance-soft); --sec-ink: var(--c-finance-ink); }
+.sec-wishlist { --sec: var(--c-wishlist); --sec-soft: var(--c-wishlist-soft); --sec-ink: var(--c-wishlist-ink); }
+
 body {
-	background-color: #0a0a12;
-	background-image:
-		radial-gradient(ellipse at 20% 10%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
-		radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
-		linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
-		linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
-	background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+	background-color: var(--color-base-100);
+	color: var(--color-base-content);
+	font-family: var(--font-body);
 	min-height: 100vh;
 }
 
-/* ─── Glassmorphism base ─── */
+.font-display {
+	font-family: var(--font-display);
+	font-weight: var(--display-weight);
+	letter-spacing: var(--display-tracking);
+}
+
+.font-mono-num {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ─── Tile: o bloco básico do layout ─── */
+.tile {
+	background: var(--color-base-200);
+	border: var(--tile-border);
+	border-radius: var(--tile-radius);
+	padding: var(--tile-pad);
+	box-shadow: inset 0 var(--tile-accent-w) 0 var(--sec, transparent), var(--tile-shadow);
+	min-width: 0;
+}
+
+/* ─── Card interno (itens de lista dentro de tiles e páginas de seção) ─── */
+/* Nome mantido por compatibilidade: vários componentes já usam .glass-card */
 .glass-card {
-	background: rgba(255, 255, 255, 0.035);
-	backdrop-filter: blur(12px);
-	-webkit-backdrop-filter: blur(12px);
-	border: 1px solid rgba(6, 182, 212, 0.12);
-	border-radius: 0.75rem;
+	background: var(--color-base-200);
+	border: 1px solid var(--color-base-300);
+	border-radius: var(--radius-box);
 	transition:
 		border-color 0.2s ease,
 		background 0.2s ease;
 }
 
 .glass-card:hover {
-	border-color: rgba(6, 182, 212, 0.25);
-	background: rgba(255, 255, 255, 0.05);
-}
-
-.glass-sidebar {
-	background: rgba(10, 10, 20, 0.75);
-	backdrop-filter: blur(20px);
-	-webkit-backdrop-filter: blur(20px);
-	border-left: 1px solid rgba(6, 182, 212, 0.1);
+	border-color: color-mix(in oklab, var(--color-base-content) 18%, var(--color-base-300));
 }
 
 /* ─── Animação de entrada ─── */
@@ -93,61 +241,42 @@ body {
 	animation: fadeSlideIn 0.35s ease both;
 }
 
+@media (prefers-reduced-motion: reduce) {
+	.card-enter,
+	.tile {
+		animation: none !important;
+	}
+}
+
 /* ─── Skeleton pulse ─── */
 @keyframes skeletonPulse {
 	0%,
 	100% {
-		opacity: 0.4;
+		opacity: 0.5;
 	}
 	50% {
-		opacity: 0.15;
+		opacity: 0.2;
 	}
 }
 
 .skeleton-pulse {
 	animation: skeletonPulse 1.5s ease-in-out infinite;
-	border-radius: 0.5rem;
-	background: rgba(6, 182, 212, 0.15);
-}
-
-/* ─── Clock font ─── */
-.clock-display {
-	font-family: 'Space Mono', monospace;
-	background: linear-gradient(135deg, #06b6d4, #8b5cf6);
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	background-clip: text;
-	letter-spacing: -0.02em;
-}
-
-/* ─── Weather badge ─── */
-.weather-badge {
-	display: inline-flex;
-	align-items: center;
-	gap: 3px;
-	font-size: 0.65rem;
-	font-weight: 600;
-	letter-spacing: 0.04em;
-	padding: 1px 7px;
-	border-radius: 999px;
-	background: rgba(6, 182, 212, 0.08);
-	border: 1px solid rgba(6, 182, 212, 0.18);
-	color: rgba(6, 182, 212, 0.7);
-	transition: opacity 0.4s ease;
-	animation: fadeSlideIn 0.5s ease both;
+	border-radius: var(--radius-field);
+	background: var(--color-base-300);
 }
 
 /* ─── Scrollbar ─── */
 ::-webkit-scrollbar {
-	width: 4px;
+	width: 6px;
+	height: 6px;
 }
 ::-webkit-scrollbar-track {
 	background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-	background: rgba(6, 182, 212, 0.3);
-	border-radius: 2px;
+	background: var(--color-base-300);
+	border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-	background: rgba(6, 182, 212, 0.5);
+	background: color-mix(in oklab, var(--color-base-content) 30%, transparent);
 }

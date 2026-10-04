@@ -35,7 +35,7 @@
 	<div class="mb-6 flex items-center gap-2">
 		<LineChart size={16} class="text-info" />
 		<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Finanças</h2>
-		<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(56,189,248,0.12); color: #38bdf8">HUD</span>
+		<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: color-mix(in oklab, var(--color-info) 12%, transparent); color: var(--color-info)">HUD</span>
 	</div>
 
 	{#if loading}
@@ -52,7 +52,7 @@
 			<!-- Resumo / Autonomy -->
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<!-- Runaway HUD -->
-				<div class="col-span-1 md:col-span-2 rounded-xl p-5 flex flex-col justify-center relative overflow-hidden" style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.05)); border: 1px solid rgba(6,182,212,0.2);">
+				<div class="col-span-1 md:col-span-2 rounded-xl p-5 flex flex-col justify-center relative overflow-hidden" style="background: linear-gradient(135deg, color-mix(in oklab, var(--color-primary) 10%, transparent), color-mix(in oklab, var(--color-info) 5%, transparent)); border: 1px solid color-mix(in oklab, var(--color-primary) 20%, transparent);">
 					<div class="absolute right-0 top-0 opacity-10">
 						<Activity size={120} />
 					</div>
@@ -60,7 +60,7 @@
 						Autonomia (Runway)
 					</div>
 					<div class="relative z-10 flex items-end gap-2">
-						<span class="text-5xl font-bold tracking-tighter" style="color: #e0f2fe;">{overview.autonomy.days_of_runway}</span>
+						<span class="text-5xl font-bold tracking-tighter" style="color: var(--color-base-content);">{overview.autonomy.days_of_runway}</span>
 						<span class="text-sm text-base-content/50 uppercase tracking-widest mb-1">dias</span>
 					</div>
 					<div class="relative z-10 mt-3 flex items-center gap-4 text-xs">
@@ -70,7 +70,7 @@
 				</div>
 
 				<!-- Debt alert -->
-				<div class="col-span-1 rounded-xl p-5 flex flex-col justify-center" style="background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2);">
+				<div class="col-span-1 rounded-xl p-5 flex flex-col justify-center" style="background: color-mix(in oklab, var(--color-error) 5%, transparent); border: 1px solid color-mix(in oklab, var(--color-error) 20%, transparent);">
 					<div class="text-xs font-semibold uppercase tracking-widest text-error mb-1 flex items-center gap-1">
 						<ShieldAlert size={14} /> Dívidas Ativas
 					</div>
@@ -105,7 +105,7 @@
 				<div class="flex items-center justify-between mb-3">
 					<h3 class="text-xs font-semibold uppercase tracking-widest text-base-content/50">Últimas Transações</h3>
 				</div>
-				<div class="rounded-xl p-2" style="background: rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.05);">
+				<div class="rounded-xl p-2" style="background: rgba(0,0,0,0.1); border: 1px solid color-mix(in oklab, var(--color-base-content) 5%, transparent);">
 					<TransactionList {transactions} />
 				</div>
 			</div>

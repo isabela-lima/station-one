@@ -33,7 +33,7 @@
 		<div class="flex items-center gap-2">
 			<div
 				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-				style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3)"
+				style="background: color-mix(in oklab, var(--color-secondary) 15%, transparent); border: 1px solid color-mix(in oklab, var(--color-secondary) 30%, transparent)"
 			>
 				<Target size={14} class="text-secondary" />
 			</div>
@@ -61,10 +61,10 @@
 				<span>{completedCount}/{milestones.length} marcos</span>
 				<span>{Math.round(progress)}%</span>
 			</div>
-			<div class="h-1 w-full overflow-hidden rounded-full" style="background: rgba(255,255,255,0.06)">
+			<div class="h-1 w-full overflow-hidden rounded-full" style="background: color-mix(in oklab, var(--color-base-content) 6%, transparent)">
 				<div
 					class="h-full rounded-full transition-all duration-500"
-					style="width: {progress}%; background: linear-gradient(90deg, #06b6d4, #8b5cf6)"
+					style="width: {progress}%; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary))"
 				></div>
 			</div>
 		</div>

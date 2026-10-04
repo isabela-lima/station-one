@@ -74,19 +74,19 @@
 	}
 
 	.habit-toggle {
-		background: rgba(255, 255, 255, 0.04);
-		border: 1px solid rgba(6, 182, 212, 0.15);
+		background: color-mix(in oklab, var(--color-base-content) 4%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-primary) 15%, transparent);
 	}
 
 	.habit-toggle:hover:not(:disabled) {
-		background: rgba(6, 182, 212, 0.08);
-		border-color: rgba(6, 182, 212, 0.3);
+		background: color-mix(in oklab, var(--color-primary) 8%, transparent);
+		border-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
 		transform: scale(1.05);
 	}
 
 	.habit-toggle.done {
-		background: rgba(52, 211, 153, 0.08);
-		border-color: rgba(52, 211, 153, 0.3);
+		background: color-mix(in oklab, var(--color-success) 8%, transparent);
+		border-color: color-mix(in oklab, var(--color-success) 30%, transparent);
 	}
 
 	.habit-toggle .emoji {
@@ -98,20 +98,20 @@
 	}
 
 	.check-overlay {
-		background: rgba(52, 211, 153, 0.1);
+		background: color-mix(in oklab, var(--color-success) 10%, transparent);
 		animation: fadeSlideIn 0.2s ease both;
 	}
 
 	.streak-badge {
 		padding: 1px 6px;
 		border-radius: 999px;
-		background: rgba(251, 146, 60, 0.1);
-		border: 1px solid rgba(251, 146, 60, 0.2);
-		color: rgb(251, 146, 60);
+		background: color-mix(in oklab, var(--c-protocols) 10%, transparent);
+		border: 1px solid color-mix(in oklab, var(--c-protocols) 20%, transparent);
+		color: var(--c-protocols);
 	}
 
 	.habit-card.completed {
-		border-color: rgba(52, 211, 153, 0.15);
-		background: rgba(52, 211, 153, 0.02);
+		border-color: color-mix(in oklab, var(--color-success) 15%, transparent);
+		background: color-mix(in oklab, var(--color-success) 2%, transparent);
 	}
 </style>

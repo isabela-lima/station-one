@@ -185,9 +185,9 @@
 			<div class="space-y-4">
 				<div class="login-info-box">
 					<div class="flex gap-3">
-						<Mail size={18} class="shrink-0 mt-0.5" style="color: #22d3ee" />
+						<Mail size={18} class="shrink-0 mt-0.5" style="color: var(--color-primary)" />
 						<div class="space-y-1">
-							<p class="text-sm font-semibold" style="color: #22d3ee">Verifique sua caixa de entrada</p>
+							<p class="text-sm font-semibold" style="color: var(--color-primary)">Verifique sua caixa de entrada</p>
 							<p class="text-xs text-base-content/60 leading-relaxed">
 								Enviamos um link de confirmação para <strong class="text-base-content/80">{email}</strong>.
 								Clique no link para ativar sua conta e depois volte aqui para entrar.
@@ -238,9 +238,9 @@
 				<div class="space-y-4">
 					<div class="login-info-box">
 						<div class="flex gap-3">
-							<Mail size={18} class="shrink-0 mt-0.5" style="color: #22d3ee" />
+							<Mail size={18} class="shrink-0 mt-0.5" style="color: var(--color-primary)" />
 							<div class="space-y-1">
-								<p class="text-sm font-semibold" style="color: #22d3ee">Verifique sua caixa de entrada</p>
+								<p class="text-sm font-semibold" style="color: var(--color-primary)">Verifique sua caixa de entrada</p>
 								<p class="text-xs text-base-content/60 leading-relaxed">
 									Se existir uma conta para <strong class="text-base-content/80">{email}</strong>,
 									você vai receber um link para definir uma nova senha.
@@ -432,7 +432,7 @@
 	.glow-orb-1 {
 		width: 500px;
 		height: 500px;
-		background: #06b6d4;
+		background: var(--color-primary);
 		top: -200px;
 		left: -150px;
 	}
@@ -440,23 +440,23 @@
 	.glow-orb-2 {
 		width: 400px;
 		height: 400px;
-		background: #8b5cf6;
+		background: var(--color-secondary);
 		bottom: -180px;
 		right: -100px;
 	}
 
 	.login-card {
 		position: relative;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(6, 182, 212, 0.15);
+		background: color-mix(in oklab, var(--color-base-content) 3%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-primary) 15%, transparent);
 		border-radius: 1.25rem;
 		padding: 2.5rem;
 		backdrop-filter: blur(24px);
 		-webkit-backdrop-filter: blur(24px);
 		box-shadow:
-			0 0 0 1px rgba(6, 182, 212, 0.05),
+			0 0 0 1px color-mix(in oklab, var(--color-primary) 5%, transparent),
 			0 24px 64px rgba(0, 0, 0, 0.35),
-			0 0 40px rgba(6, 182, 212, 0.04) inset;
+			0 0 40px color-mix(in oklab, var(--color-primary) 4%, transparent) inset;
 	}
 
 	.login-icon-ring {
@@ -466,9 +466,9 @@
 		width: 52px;
 		height: 52px;
 		border-radius: 50%;
-		background: rgba(6, 182, 212, 0.1);
-		border: 1px solid rgba(6, 182, 212, 0.25);
-		box-shadow: 0 0 20px rgba(6, 182, 212, 0.12);
+		background: color-mix(in oklab, var(--color-primary) 10%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-primary) 25%, transparent);
+		box-shadow: 0 0 20px color-mix(in oklab, var(--color-primary) 12%, transparent);
 	}
 
 	.form-group {
@@ -489,8 +489,8 @@
 		width: 100%;
 		padding: 0.625rem 0.875rem;
 		font-size: 0.875rem;
-		background: rgba(255, 255, 255, 0.04);
-		border: 1px solid rgba(6, 182, 212, 0.18);
+		background: color-mix(in oklab, var(--color-base-content) 4%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-primary) 18%, transparent);
 		border-radius: 0.625rem;
 		color: var(--color-base-content);
 		outline: none;
@@ -502,23 +502,23 @@
 	}
 
 	.login-input:focus {
-		border-color: rgba(6, 182, 212, 0.5);
-		box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.08);
+		border-color: color-mix(in oklab, var(--color-primary) 50%, transparent);
+		box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 8%, transparent);
 	}
 
 	.login-info-box {
 		padding: 1rem;
 		border-radius: 0.75rem;
-		background: rgba(6, 182, 212, 0.07);
-		border: 1px solid rgba(6, 182, 212, 0.2);
+		background: color-mix(in oklab, var(--color-primary) 7%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-primary) 20%, transparent);
 	}
 
 	.login-error {
 		padding: 0.5rem 0.75rem;
 		border-radius: 0.5rem;
-		background: rgba(239, 68, 68, 0.08);
-		border: 1px solid rgba(239, 68, 68, 0.2);
-		color: #f87171;
+		background: color-mix(in oklab, var(--color-error) 8%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-error) 20%, transparent);
+		color: var(--color-error);
 	}
 
 	.login-btn {
@@ -531,17 +531,17 @@
 		font-size: 0.875rem;
 		font-weight: 600;
 		border-radius: 0.625rem;
-		background: rgba(6, 182, 212, 0.15);
-		border: 1px solid rgba(6, 182, 212, 0.35);
-		color: #06b6d4;
+		background: color-mix(in oklab, var(--color-primary) 15%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-primary) 35%, transparent);
+		color: var(--color-primary);
 		cursor: pointer;
 		transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
 		margin-top: 0.25rem;
 	}
 
 	.login-btn:hover:not(:disabled) {
-		background: rgba(6, 182, 212, 0.22);
-		box-shadow: 0 0 16px rgba(6, 182, 212, 0.15);
+		background: color-mix(in oklab, var(--color-primary) 22%, transparent);
+		box-shadow: 0 0 16px color-mix(in oklab, var(--color-primary) 15%, transparent);
 	}
 
 	.login-btn:disabled {
@@ -553,8 +553,8 @@
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: #06b6d4;
-		box-shadow: 0 0 6px #06b6d4;
+		background: var(--color-primary);
+		box-shadow: 0 0 6px var(--color-primary);
 		animation: pulse 2s infinite;
 	}
 
