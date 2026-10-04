@@ -29,9 +29,10 @@
 			step = 'reset';
 		} else {
 			step = 'forgot';
-			errorMsg = hashParams.get('error_code') === 'otp_expired'
-				? 'Link expirado. Peça um novo abaixo.'
-				: 'Link inválido. Peça um novo abaixo.';
+			errorMsg =
+				hashParams.get('error_code') === 'otp_expired'
+					? 'Link expirado. Peça um novo abaixo.'
+					: 'Link inválido. Peça um novo abaixo.';
 		}
 		history.replaceState(null, '', '/login');
 	});
@@ -146,8 +147,7 @@
 	}
 </script>
 
-<div class="login-bg min-h-screen flex items-center justify-center p-4">
-
+<div class="login-bg flex min-h-screen items-center justify-center p-4">
 	<!-- Ambient glow -->
 	<div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
 		<div class="glow-orb glow-orb-1"></div>
@@ -155,7 +155,6 @@
 	</div>
 
 	<div class="login-card w-full max-w-sm">
-
 		<!-- Header -->
 		<div class="mb-8 flex flex-col items-center gap-3">
 			<div class="login-icon-ring">
@@ -169,7 +168,7 @@
 			</div>
 			<div class="text-center">
 				<h1 class="text-2xl font-bold tracking-tight text-base-content">Station One</h1>
-				<p class="mt-1 text-xs uppercase tracking-widest text-primary/50">
+				<p class="mt-1 text-xs tracking-widest text-primary/50 uppercase">
 					{#if step === 'login'}Acesso ao sistema
 					{:else if step === 'register'}Novo operador
 					{:else if step === 'forgot'}Recuperar acesso
@@ -185,12 +184,15 @@
 			<div class="space-y-4">
 				<div class="login-info-box">
 					<div class="flex gap-3">
-						<Mail size={18} class="shrink-0 mt-0.5" style="color: var(--color-primary)" />
+						<Mail size={18} class="mt-0.5 shrink-0" style="color: var(--color-primary)" />
 						<div class="space-y-1">
-							<p class="text-sm font-semibold" style="color: var(--color-primary)">Verifique sua caixa de entrada</p>
-							<p class="text-xs text-base-content/60 leading-relaxed">
-								Enviamos um link de confirmação para <strong class="text-base-content/80">{email}</strong>.
-								Clique no link para ativar sua conta e depois volte aqui para entrar.
+							<p class="text-sm font-semibold" style="color: var(--color-primary)">
+								Verifique sua caixa de entrada
+							</p>
+							<p class="text-xs leading-relaxed text-base-content/60">
+								Enviamos um link de confirmação para <strong class="text-base-content/80"
+									>{email}</strong
+								>. Clique no link para ativar sua conta e depois volte aqui para entrar.
 							</p>
 						</div>
 					</div>
@@ -198,7 +200,7 @@
 
 				{#if resendSuccess}
 					<div class="flex items-center gap-2 px-1">
-						<CheckCircle2 size={14} class="text-success shrink-0" />
+						<CheckCircle2 size={14} class="shrink-0 text-success" />
 						<span class="text-xs text-success">Email reenviado com sucesso!</span>
 					</div>
 				{/if}
@@ -225,23 +227,25 @@
 
 				<button
 					type="button"
-					class="w-full text-center text-xs text-base-content/40 hover:text-base-content/70 transition-colors py-1"
+					class="w-full py-1 text-center text-xs text-base-content/40 transition-colors hover:text-base-content/70"
 					onclick={goBack}
 				>
 					← Voltar para o login
 				</button>
 			</div>
 
-		<!-- ── Forgot Password ──────────────────────────── -->
+			<!-- ── Forgot Password ──────────────────────────── -->
 		{:else if step === 'forgot'}
 			{#if resetSent}
 				<div class="space-y-4">
 					<div class="login-info-box">
 						<div class="flex gap-3">
-							<Mail size={18} class="shrink-0 mt-0.5" style="color: var(--color-primary)" />
+							<Mail size={18} class="mt-0.5 shrink-0" style="color: var(--color-primary)" />
 							<div class="space-y-1">
-								<p class="text-sm font-semibold" style="color: var(--color-primary)">Verifique sua caixa de entrada</p>
-								<p class="text-xs text-base-content/60 leading-relaxed">
+								<p class="text-sm font-semibold" style="color: var(--color-primary)">
+									Verifique sua caixa de entrada
+								</p>
+								<p class="text-xs leading-relaxed text-base-content/60">
 									Se existir uma conta para <strong class="text-base-content/80">{email}</strong>,
 									você vai receber um link para definir uma nova senha.
 								</p>
@@ -250,15 +254,21 @@
 					</div>
 					<button
 						type="button"
-						class="w-full text-center text-xs text-base-content/40 hover:text-base-content/70 transition-colors py-1"
+						class="w-full py-1 text-center text-xs text-base-content/40 transition-colors hover:text-base-content/70"
 						onclick={goBack}
 					>
 						← Voltar para o login
 					</button>
 				</div>
 			{:else}
-				<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); handleForgot(); }}>
-					<p class="text-xs text-base-content/50 leading-relaxed">
+				<form
+					class="space-y-4"
+					onsubmit={(e) => {
+						e.preventDefault();
+						handleForgot();
+					}}
+				>
+					<p class="text-xs leading-relaxed text-base-content/50">
 						Informe o email da sua conta e enviaremos um link para redefinir a senha.
 					</p>
 					<div class="form-group">
@@ -288,7 +298,7 @@
 					</button>
 					<button
 						type="button"
-						class="w-full text-center text-xs text-base-content/40 hover:text-base-content/70 transition-colors py-1"
+						class="w-full py-1 text-center text-xs text-base-content/40 transition-colors hover:text-base-content/70"
 						onclick={goBack}
 					>
 						← Voltar para o login
@@ -296,9 +306,15 @@
 				</form>
 			{/if}
 
-		<!-- ── Reset Password (vindo do link do email) ───── -->
+			<!-- ── Reset Password (vindo do link do email) ───── -->
 		{:else if step === 'reset'}
-			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); handleReset(); }}>
+			<form
+				class="space-y-4"
+				onsubmit={(e) => {
+					e.preventDefault();
+					handleReset();
+				}}
+			>
 				<div class="form-group">
 					<label class="login-label" for="new-password">Nova senha</label>
 					<input
@@ -340,9 +356,15 @@
 				</button>
 			</form>
 
-		<!-- ── Login / Register Form ────────────────────── -->
+			<!-- ── Login / Register Form ────────────────────── -->
 		{:else}
-			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+			<form
+				class="space-y-4"
+				onsubmit={(e) => {
+					e.preventDefault();
+					handleSubmit();
+				}}
+			>
 				<div class="form-group">
 					<label class="login-label" for="email">Email</label>
 					<input
@@ -362,8 +384,12 @@
 						{#if step === 'login'}
 							<button
 								type="button"
-								class="text-[10px] text-primary/60 hover:text-primary transition-colors"
-								onclick={() => { step = 'forgot'; errorMsg = ''; resetSent = false; }}
+								class="text-[10px] text-primary/60 transition-colors hover:text-primary"
+								onclick={() => {
+									step = 'forgot';
+									errorMsg = '';
+									resetSent = false;
+								}}
 							>
 								Esqueci minha senha
 							</button>
@@ -398,7 +424,7 @@
 			<p class="mt-6 text-center text-xs text-base-content/40">
 				{step === 'login' ? 'Sem conta?' : 'Já tem conta?'}
 				<button
-					class="ml-1 text-primary/70 hover:text-primary transition-colors underline underline-offset-2"
+					class="ml-1 text-primary/70 underline underline-offset-2 transition-colors hover:text-primary"
 					onclick={() => {
 						step = step === 'login' ? 'register' : 'login';
 						errorMsg = '';
@@ -412,7 +438,7 @@
 		<!-- Footer -->
 		<div class="mt-8 flex items-center justify-center gap-2">
 			<div class="status-dot"></div>
-			<span class="text-[10px] uppercase tracking-widest text-base-content/20">Sistema online</span>
+			<span class="text-[10px] tracking-widest text-base-content/20 uppercase">Sistema online</span>
 		</div>
 	</div>
 </div>
@@ -494,7 +520,9 @@
 		border-radius: 0.625rem;
 		color: var(--color-base-content);
 		outline: none;
-		transition: border-color 0.15s, box-shadow 0.15s;
+		transition:
+			border-color 0.15s,
+			box-shadow 0.15s;
 	}
 
 	.login-input::placeholder {
@@ -535,7 +563,10 @@
 		border: 1px solid color-mix(in oklab, var(--color-primary) 35%, transparent);
 		color: var(--color-primary);
 		cursor: pointer;
-		transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
+		transition:
+			background 0.15s,
+			box-shadow 0.15s,
+			opacity 0.15s;
 		margin-top: 0.25rem;
 	}
 
@@ -559,7 +590,12 @@
 	}
 
 	@keyframes pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.4; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
 	}
 </style>

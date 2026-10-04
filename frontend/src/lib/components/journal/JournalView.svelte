@@ -56,7 +56,12 @@
 	}
 
 	const hasAnything = (d: DaySummary) =>
-		d.mood != null || d.energy != null || d.entries_count > 0 || d.tasks_done > 0 || d.habits_done > 0 || d.spent > 0;
+		d.mood != null ||
+		d.energy != null ||
+		d.entries_count > 0 ||
+		d.tasks_done > 0 ||
+		d.habits_done > 0 ||
+		d.spent > 0;
 
 	// Faixa dos últimos 30 dias (mais antigo → mais recente), colorida pelo humor
 	const strip = $derived(history.slice(0, 30).reverse());
@@ -68,7 +73,11 @@
 	}
 
 	function brl(v: number) {
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
+		return new Intl.NumberFormat('pt-BR', {
+			style: 'currency',
+			currency: 'BRL',
+			maximumFractionDigits: 0
+		}).format(v);
 	}
 
 	const MOOD_WORD = ['péssimo', 'ruim', 'ok', 'bom', 'ótimo'];
@@ -80,8 +89,16 @@
 		<div class="flex flex-col gap-5">
 			{#if journalToday.day}
 				<div class="checkins">
-					<CheckinPicker kind="mood" value={journalToday.day.mood} onPick={(v) => setCheckin('mood', v)} />
-					<CheckinPicker kind="energy" value={journalToday.day.energy} onPick={(v) => setCheckin('energy', v)} />
+					<CheckinPicker
+						kind="mood"
+						value={journalToday.day.mood}
+						onPick={(v) => setCheckin('mood', v)}
+					/>
+					<CheckinPicker
+						kind="energy"
+						value={journalToday.day.energy}
+						onPick={(v) => setCheckin('energy', v)}
+					/>
 				</div>
 			{/if}
 
@@ -95,7 +112,8 @@
 				<EntryList entries={journalToday.day.entries} onDelete={deleteEntry} />
 			{:else}
 				<p class="muted">
-					Nada registrado hoje. Anote o que está acontecendo, uma ideia, um link: cada entrada fica com a hora.
+					Nada registrado hoje. Anote o que está acontecendo, uma ideia, um link: cada entrada fica
+					com a hora.
 				</p>
 			{/if}
 		</div>
@@ -140,10 +158,14 @@
 							onclick={() => toggleDay(d.date)}
 						>
 							<span class="flex min-w-0 flex-1 flex-col gap-1 text-left">
-								<span class="font-semibold">{dayLabel(d.date)}{#if d.mood} · {MOOD_WORD[d.mood - 1]}{/if}</span>
+								<span class="font-semibold"
+									>{dayLabel(d.date)}{#if d.mood}
+										· {MOOD_WORD[d.mood - 1]}{/if}</span
+								>
 								{#if d.first_entry}<span class="first">“{d.first_entry}”</span>{/if}
 								<span class="chips">
-									{#if d.entries_count > 0}<span><MessageSquare size={13} />{d.entries_count}</span>{/if}
+									{#if d.entries_count > 0}<span><MessageSquare size={13} />{d.entries_count}</span
+										>{/if}
 									{#if d.tasks_done > 0}<span><CheckCircle2 size={13} />{d.tasks_done}</span>{/if}
 									{#if d.habits_done > 0}<span><Flame size={13} />{d.habits_done}</span>{/if}
 									{#if d.spent > 0}<span><Wallet size={13} />{brl(d.spent)}</span>{/if}

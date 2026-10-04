@@ -5,7 +5,10 @@
 	let { recap, title = 'Resumo do dia' }: { recap: Recap; title?: string } = $props();
 
 	const empty = $derived(
-		recap.tasks_done.length === 0 && recap.habits_done.length === 0 && recap.spent === 0 && recap.income === 0
+		recap.tasks_done.length === 0 &&
+			recap.habits_done.length === 0 &&
+			recap.spent === 0 &&
+			recap.income === 0
 	);
 
 	function brl(v: number) {
@@ -16,15 +19,25 @@
 <section class="recap" aria-label={title}>
 	<h3 class="font-display text-base">{title}</h3>
 	{#if empty}
-		<p class="muted">Nada registrado ainda. Conclua tarefas, marque protocolos ou lance gastos e eles aparecem aqui.</p>
+		<p class="muted">
+			Nada registrado ainda. Conclua tarefas, marque protocolos ou lance gastos e eles aparecem
+			aqui.
+		</p>
 	{:else}
 		<ul class="lines">
 			{#if recap.tasks_done.length > 0}
 				<li>
 					<CheckCircle2 size={17} style="color: var(--c-ops)" />
 					<div class="min-w-0">
-						<strong>{recap.tasks_done.length} {recap.tasks_done.length === 1 ? 'tarefa concluída' : 'tarefas concluídas'}</strong>
-						<span class="detail">{recap.tasks_done.slice(0, 3).join(' · ')}{recap.tasks_done.length > 3 ? ' …' : ''}</span>
+						<strong
+							>{recap.tasks_done.length}
+							{recap.tasks_done.length === 1 ? 'tarefa concluída' : 'tarefas concluídas'}</strong
+						>
+						<span class="detail"
+							>{recap.tasks_done.slice(0, 3).join(' · ')}{recap.tasks_done.length > 3
+								? ' …'
+								: ''}</span
+						>
 					</div>
 				</li>
 			{/if}
@@ -32,8 +45,13 @@
 				<li>
 					<Flame size={17} style="color: var(--c-protocols)" />
 					<div class="min-w-0">
-						<strong>{recap.habits_done.length} {recap.habits_done.length === 1 ? 'protocolo' : 'protocolos'}</strong>
-						<span class="detail">{recap.habits_done.map((h) => `${h.emoji} ${h.name}`).join(' · ')}</span>
+						<strong
+							>{recap.habits_done.length}
+							{recap.habits_done.length === 1 ? 'protocolo' : 'protocolos'}</strong
+						>
+						<span class="detail"
+							>{recap.habits_done.map((h) => `${h.emoji} ${h.name}`).join(' · ')}</span
+						>
 					</div>
 				</li>
 			{/if}
@@ -42,7 +60,9 @@
 					<Wallet size={17} style="color: var(--c-finance)" />
 					<div class="min-w-0">
 						<strong>
-							{#if recap.spent > 0}{brl(recap.spent)} gastos{/if}{#if recap.spent > 0 && recap.income > 0} · {/if}{#if recap.income > 0}{brl(recap.income)} recebidos{/if}
+							{#if recap.spent > 0}{brl(recap.spent)} gastos{/if}{#if recap.spent > 0 && recap.income > 0}
+								·
+							{/if}{#if recap.income > 0}{brl(recap.income)} recebidos{/if}
 						</strong>
 						{#if recap.top_categories.length > 0}
 							<span class="detail">{recap.top_categories.map((c) => c.category).join(' · ')}</span>

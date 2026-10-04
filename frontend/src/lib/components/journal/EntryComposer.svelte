@@ -2,7 +2,10 @@
 	import { CornerDownLeft } from 'lucide-svelte';
 	import { addEntry } from '$lib/journal.svelte';
 
-	let { placeholder = 'Registrar algo… (Enter salva)', disabled = false }: { placeholder?: string; disabled?: boolean } = $props();
+	let {
+		placeholder = 'Registrar algo… (Enter salva)',
+		disabled = false
+	}: { placeholder?: string; disabled?: boolean } = $props();
 
 	let text = $state('');
 	let input = $state<HTMLInputElement | null>(null);

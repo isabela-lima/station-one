@@ -36,9 +36,9 @@
 	</button>
 
 	<!-- Info -->
-	<div class="flex-1 min-w-0">
+	<div class="min-w-0 flex-1">
 		<p
-			class="text-sm font-semibold leading-tight truncate"
+			class="truncate text-sm leading-tight font-semibold"
 			class:line-through={habit.completed_today}
 			class:opacity-50={habit.completed_today}
 		>
@@ -61,7 +61,7 @@
 	<button
 		onclick={() => onDelete(habit.id)}
 		disabled={pending}
-		class="btn btn-ghost btn-xs text-base-content/20 hover:text-error transition-colors"
+		class="btn text-base-content/20 btn-ghost transition-colors btn-xs hover:text-error"
 		aria-label="Remover hábito"
 	>
 		<Trash2 size={13} />

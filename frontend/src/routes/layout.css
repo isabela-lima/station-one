@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-@plugin "daisyui" {
+@plugin 'daisyui' {
 	themes: false;
 }
 
@@ -14,11 +14,11 @@
  */
 
 /* ── A · Órbita — espacial, modernizado ─────────────────── */
-@plugin "daisyui/theme" {
-	name: "orbita";
+@plugin 'daisyui/theme' {
+	name: 'orbita';
 	default: true;
 	prefersdark: true;
-	color-scheme: "dark";
+	color-scheme: 'dark';
 
 	--color-base-100: #0b0d14;
 	--color-base-200: #12151f;
@@ -46,9 +46,9 @@
 }
 
 /* ── B · Diário — minimalista, denso ────────────────────── */
-@plugin "daisyui/theme" {
-	name: "diario";
-	color-scheme: "dark";
+@plugin 'daisyui/theme' {
+	name: 'diario';
+	color-scheme: 'dark';
 
 	--color-base-100: #0f0f10;
 	--color-base-200: #161618;
@@ -76,10 +76,10 @@
 }
 
 /* ── C · Painel — claro, ousado, colorido ───────────────── */
-@plugin "daisyui/theme" {
-	name: "painel";
+@plugin 'daisyui/theme' {
+	name: 'painel';
 	prefersdark: false;
-	color-scheme: "light";
+	color-scheme: 'light';
 
 	--color-base-100: #eef0f4;
 	--color-base-200: #ffffff;
@@ -114,13 +114,27 @@
 	--display-weight: 600;
 	--display-tracking: -0.02em;
 
-	--c-ops: #22d3ee;      --c-ops-soft: #0f2129;       --c-ops-ink: #67e8f9;
-	--c-missions: #8b5cf6; --c-missions-soft: #1b1630;  --c-missions-ink: #c4b5fd;
-	--c-protocols: #fb923c;--c-protocols-soft: #2a1a10; --c-protocols-ink: #fdba74;
-	--c-finance: #34d399;  --c-finance-soft: #0f2620;   --c-finance-ink: #6ee7b7;
-	--c-wishlist: #f472b6; --c-wishlist-soft: #2a1322;  --c-wishlist-ink: #f9a8d4;
-	--c-journal: #fbbf24;  --c-journal-soft: #29220f;   --c-journal-ink: #fcd34d;
-	--c-today: #e6e8ef;    --c-today-soft: #1a1e2b;     --c-today-ink: #e6e8ef;
+	--c-ops: #22d3ee;
+	--c-ops-soft: #0f2129;
+	--c-ops-ink: #67e8f9;
+	--c-missions: #8b5cf6;
+	--c-missions-soft: #1b1630;
+	--c-missions-ink: #c4b5fd;
+	--c-protocols: #fb923c;
+	--c-protocols-soft: #2a1a10;
+	--c-protocols-ink: #fdba74;
+	--c-finance: #34d399;
+	--c-finance-soft: #0f2620;
+	--c-finance-ink: #6ee7b7;
+	--c-wishlist: #f472b6;
+	--c-wishlist-soft: #2a1322;
+	--c-wishlist-ink: #f9a8d4;
+	--c-journal: #fbbf24;
+	--c-journal-soft: #29220f;
+	--c-journal-ink: #fcd34d;
+	--c-today: #e6e8ef;
+	--c-today-soft: #1a1e2b;
+	--c-today-ink: #e6e8ef;
 
 	--tile-radius: 14px;
 	--tile-pad: 20px;
@@ -138,13 +152,27 @@
 	--display-tracking: -0.02em;
 
 	/* Minimalista: seções não ganham cor própria, só o acento */
-	--c-ops: #a5b0ff;      --c-ops-soft: #1a1a1d;       --c-ops-ink: #ededef;
-	--c-missions: #a5b0ff; --c-missions-soft: #1a1a1d;  --c-missions-ink: #ededef;
-	--c-protocols: #f0a35e;--c-protocols-soft: #1a1a1d; --c-protocols-ink: #ededef;
-	--c-finance: #a5b0ff;  --c-finance-soft: #1a1a1d;   --c-finance-ink: #ededef;
-	--c-wishlist: #a5b0ff; --c-wishlist-soft: #1a1a1d;  --c-wishlist-ink: #ededef;
-	--c-journal: #a5b0ff;  --c-journal-soft: #1a1a1d;   --c-journal-ink: #ededef;
-	--c-today: #ededef;    --c-today-soft: #26262a;     --c-today-ink: #ededef;
+	--c-ops: #a5b0ff;
+	--c-ops-soft: #1a1a1d;
+	--c-ops-ink: #ededef;
+	--c-missions: #a5b0ff;
+	--c-missions-soft: #1a1a1d;
+	--c-missions-ink: #ededef;
+	--c-protocols: #f0a35e;
+	--c-protocols-soft: #1a1a1d;
+	--c-protocols-ink: #ededef;
+	--c-finance: #a5b0ff;
+	--c-finance-soft: #1a1a1d;
+	--c-finance-ink: #ededef;
+	--c-wishlist: #a5b0ff;
+	--c-wishlist-soft: #1a1a1d;
+	--c-wishlist-ink: #ededef;
+	--c-journal: #a5b0ff;
+	--c-journal-soft: #1a1a1d;
+	--c-journal-ink: #ededef;
+	--c-today: #ededef;
+	--c-today-soft: #26262a;
+	--c-today-ink: #ededef;
 
 	--tile-radius: 10px;
 	--tile-pad: 16px;
@@ -161,13 +189,27 @@
 	--display-weight: 800;
 	--display-tracking: -0.03em;
 
-	--c-ops: #2f5bea;      --c-ops-soft: #dfe6ff;       --c-ops-ink: #1f45c7;
-	--c-missions: #7a3fe0; --c-missions-soft: #ece3ff;  --c-missions-ink: #5b2bb8;
-	--c-protocols: #ff7a2f;--c-protocols-soft: #ffe6d6; --c-protocols-ink: #a8410b;
-	--c-finance: #138a52;  --c-finance-soft: #d9f2e4;   --c-finance-ink: #0e6b3e;
-	--c-wishlist: #e0336f; --c-wishlist-soft: #ffe1ea;  --c-wishlist-ink: #a3184a;
-	--c-journal: #c27c0e;  --c-journal-soft: #fff0cc;   --c-journal-ink: #7a4a00;
-	--c-today: #141828;    --c-today-soft: #141828;     --c-today-ink: #ffffff;
+	--c-ops: #2f5bea;
+	--c-ops-soft: #dfe6ff;
+	--c-ops-ink: #1f45c7;
+	--c-missions: #7a3fe0;
+	--c-missions-soft: #ece3ff;
+	--c-missions-ink: #5b2bb8;
+	--c-protocols: #ff7a2f;
+	--c-protocols-soft: #ffe6d6;
+	--c-protocols-ink: #a8410b;
+	--c-finance: #138a52;
+	--c-finance-soft: #d9f2e4;
+	--c-finance-ink: #0e6b3e;
+	--c-wishlist: #e0336f;
+	--c-wishlist-soft: #ffe1ea;
+	--c-wishlist-ink: #a3184a;
+	--c-journal: #c27c0e;
+	--c-journal-soft: #fff0cc;
+	--c-journal-ink: #7a4a00;
+	--c-today: #141828;
+	--c-today-soft: #141828;
+	--c-today-ink: #ffffff;
 
 	--tile-radius: 22px;
 	--tile-pad: 24px;
@@ -178,13 +220,41 @@
 }
 
 /* Seção ativa de um bloco: .sec-ops etc. expõem --sec / --sec-soft / --sec-ink */
-.sec-today { --sec: var(--c-today); --sec-soft: var(--c-today-soft); --sec-ink: var(--c-today-ink); }
-.sec-ops { --sec: var(--c-ops); --sec-soft: var(--c-ops-soft); --sec-ink: var(--c-ops-ink); }
-.sec-missions { --sec: var(--c-missions); --sec-soft: var(--c-missions-soft); --sec-ink: var(--c-missions-ink); }
-.sec-protocols { --sec: var(--c-protocols); --sec-soft: var(--c-protocols-soft); --sec-ink: var(--c-protocols-ink); }
-.sec-finance { --sec: var(--c-finance); --sec-soft: var(--c-finance-soft); --sec-ink: var(--c-finance-ink); }
-.sec-wishlist { --sec: var(--c-wishlist); --sec-soft: var(--c-wishlist-soft); --sec-ink: var(--c-wishlist-ink); }
-.sec-journal { --sec: var(--c-journal); --sec-soft: var(--c-journal-soft); --sec-ink: var(--c-journal-ink); }
+.sec-today {
+	--sec: var(--c-today);
+	--sec-soft: var(--c-today-soft);
+	--sec-ink: var(--c-today-ink);
+}
+.sec-ops {
+	--sec: var(--c-ops);
+	--sec-soft: var(--c-ops-soft);
+	--sec-ink: var(--c-ops-ink);
+}
+.sec-missions {
+	--sec: var(--c-missions);
+	--sec-soft: var(--c-missions-soft);
+	--sec-ink: var(--c-missions-ink);
+}
+.sec-protocols {
+	--sec: var(--c-protocols);
+	--sec-soft: var(--c-protocols-soft);
+	--sec-ink: var(--c-protocols-ink);
+}
+.sec-finance {
+	--sec: var(--c-finance);
+	--sec-soft: var(--c-finance-soft);
+	--sec-ink: var(--c-finance-ink);
+}
+.sec-wishlist {
+	--sec: var(--c-wishlist);
+	--sec-soft: var(--c-wishlist-soft);
+	--sec-ink: var(--c-wishlist-ink);
+}
+.sec-journal {
+	--sec: var(--c-journal);
+	--sec-soft: var(--c-journal-soft);
+	--sec-ink: var(--c-journal-ink);
+}
 
 body {
 	background-color: var(--color-base-100);
@@ -210,7 +280,9 @@ body {
 	border: var(--tile-border);
 	border-radius: var(--tile-radius);
 	padding: var(--tile-pad);
-	box-shadow: inset 0 var(--tile-accent-w) 0 var(--sec, transparent), var(--tile-shadow);
+	box-shadow:
+		inset 0 var(--tile-accent-w) 0 var(--sec, transparent),
+		var(--tile-shadow);
 	min-width: 0;
 }
 

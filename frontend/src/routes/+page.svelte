@@ -6,7 +6,16 @@
 	import { supabase } from '$lib/supabase';
 	import * as api from '$lib/api';
 	import { showToast } from '$lib/toast';
-	import type { Goal, Habit, Item, WishlistItem, Section, CreatableSection, FormType, FormPayload } from '$lib';
+	import type {
+		Goal,
+		Habit,
+		Item,
+		WishlistItem,
+		Section,
+		CreatableSection,
+		FormType,
+		FormPayload
+	} from '$lib';
 
 	// ── Components ───────────────────────────────────────
 	import GoalCard from '$lib/components/GoalCard.svelte';
@@ -38,7 +47,10 @@
 	let profileName = $state<string | null>(null);
 
 	// ─── Weather ──────────────────────────────────────
-	interface WeatherInfo { temp: number; emoji: string; }
+	interface WeatherInfo {
+		temp: number;
+		emoji: string;
+	}
 	let weather = $state<WeatherInfo | null>(null);
 
 	function weatherCodeToEmoji(code: number): string {
@@ -83,7 +95,9 @@
 				localStorage.setItem('weather_coords', JSON.stringify({ lat, lon, ts: Date.now() }));
 				fetchWeather(lat, lon);
 			},
-			() => { /* permissão negada — ok */ }
+			() => {
+				/* permissão negada — ok */
+			}
 		);
 	}
 
@@ -102,7 +116,8 @@
 
 	/** Abre o formulário já no tipo da seção atual (Hoje → Operação) */
 	function openCreate() {
-		createKind = activeSection === 'today' || activeSection === 'journal' ? 'operations' : activeSection;
+		createKind =
+			activeSection === 'today' || activeSection === 'journal' ? 'operations' : activeSection;
 		selectedType = DEFAULT_TYPE[createKind];
 		createOpen = true;
 	}
@@ -118,7 +133,12 @@
 	const topStreak = $derived(habits.reduce((max, h) => Math.max(max, h.streak), 0));
 	const currentSection = $derived(SECTIONS.find((s) => s.id === activeSection)!);
 	const initials = $derived(
-		userName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+		userName
+			.split(' ')
+			.slice(0, 2)
+			.map((w: string) => w[0])
+			.join('')
+			.toUpperCase()
 	);
 
 	// ─── Date / Time ──────────────────────────────────
@@ -211,7 +231,11 @@
 	async function handleDeleteGoal(goalId: string) {
 		if (pendingIds.has(goalId)) return;
 		const goal = goals.find((g) => g.id === goalId);
-		if (!goal || !confirm(`Apagar a missão "${goal.title}"? As tarefas dela continuam, sem missão.`)) return;
+		if (
+			!goal ||
+			!confirm(`Apagar a missão "${goal.title}"? As tarefas dela continuam, sem missão.`)
+		)
+			return;
 		const goalIndex = goals.indexOf(goal);
 		const unlinked = new Set(items.filter((i) => i.goal_id === goalId).map((i) => i.id));
 		goals = goals.filter((g) => g.id !== goalId);
@@ -267,7 +291,9 @@
 		if (!before) return;
 		const done = !before.completed_today;
 		habits = habits.map((h) =>
-			h.id === id ? { ...h, completed_today: done, streak: Math.max(0, h.streak + (done ? 1 : -1)) } : h
+			h.id === id
+				? { ...h, completed_today: done, streak: Math.max(0, h.streak + (done ? 1 : -1)) }
+				: h
 		);
 		setPending(id, true);
 		try {
@@ -325,7 +351,10 @@
 		try {
 			switch (payload.kind) {
 				case 'task': {
-					const created = await api.items.create({ content: payload.content, goal_id: payload.goal_id });
+					const created = await api.items.create({
+						content: payload.content,
+						goal_id: payload.goal_id
+					});
 					items = [created, ...items.filter((i) => i.id !== created.id)];
 					showToast('Operação criada!');
 					break;
@@ -338,9 +367,12 @@
 				}
 				case 'wishlist': {
 					const created = await api.wishlist.create({
-						title: payload.title, url: payload.url,
-						image_url: payload.image_url, description: payload.description,
-						current_price: payload.current_price, target_price: payload.target_price,
+						title: payload.title,
+						url: payload.url,
+						image_url: payload.image_url,
+						description: payload.description,
+						current_price: payload.current_price,
+						target_price: payload.target_price,
 						currency: payload.currency
 					});
 					wishlist = [created, ...wishlist];
@@ -389,8 +421,13 @@
 
 	onMount(async () => {
 		try {
-			const { data: { session } } = await supabase.auth.getSession();
-			if (!session) { goto('/login'); return; }
+			const {
+				data: { session }
+			} = await supabase.auth.getSession();
+			if (!session) {
+				goto('/login');
+				return;
+			}
 
 			profileName = session.user.user_metadata?.name ?? null;
 			userName = profileName ?? session.user.email?.split('@')[0] ?? 'Astronauta';
@@ -420,41 +457,64 @@
 		// ─── Realtime subscriptions (com deduplicação) ────
 		realtimeChannel = supabase
 			.channel('station-one-realtime')
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if ((rec as Item).type === 'task' && !items.some((i) => i.id === (rec as Item).id))
-						items = [rec as Item, ...items];
-				} else if (eventType === 'UPDATE') {
-					items = items.map((i) => (i.id === rec.id ? (rec as Item) : i));
-				} else if (eventType === 'DELETE') {
-					items = items.filter((i) => i.id !== old.id);
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'items' },
+				({ eventType, new: rec, old }) => {
+					if (eventType === 'INSERT') {
+						if ((rec as Item).type === 'task' && !items.some((i) => i.id === (rec as Item).id))
+							items = [rec as Item, ...items];
+					} else if (eventType === 'UPDATE') {
+						items = items.map((i) => (i.id === rec.id ? (rec as Item) : i));
+					} else if (eventType === 'DELETE') {
+						items = items.filter((i) => i.id !== old.id);
+					}
 				}
-			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if (!goals.some((g) => g.id === (rec as Goal).id))
-						goals = [...goals, rec as Goal];
-				} else if (eventType === 'UPDATE') {
-					goals = goals.map((g) => (g.id === rec.id ? (rec as Goal) : g));
-				} else if (eventType === 'DELETE') {
-					goals = goals.filter((g) => g.id !== old.id);
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'goals' },
+				({ eventType, new: rec, old }) => {
+					if (eventType === 'INSERT') {
+						if (!goals.some((g) => g.id === (rec as Goal).id)) goals = [...goals, rec as Goal];
+					} else if (eventType === 'UPDATE') {
+						goals = goals.map((g) => (g.id === rec.id ? (rec as Goal) : g));
+					} else if (eventType === 'DELETE') {
+						goals = goals.filter((g) => g.id !== old.id);
+					}
 				}
-			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'log_entries' }, scheduleJournalRefresh)
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'wishlist' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if (!wishlist.some((w) => w.id === (rec as WishlistItem).id))
-						wishlist = [rec as WishlistItem, ...wishlist];
-				} else if (eventType === 'UPDATE') {
-					wishlist = wishlist.map((w) => (w.id === rec.id ? (rec as WishlistItem) : w));
-				} else if (eventType === 'DELETE') {
-					wishlist = wishlist.filter((w) => w.id !== old.id);
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'log_entries' },
+				scheduleJournalRefresh
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'wishlist' },
+				({ eventType, new: rec, old }) => {
+					if (eventType === 'INSERT') {
+						if (!wishlist.some((w) => w.id === (rec as WishlistItem).id))
+							wishlist = [rec as WishlistItem, ...wishlist];
+					} else if (eventType === 'UPDATE') {
+						wishlist = wishlist.map((w) => (w.id === rec.id ? (rec as WishlistItem) : w));
+					} else if (eventType === 'DELETE') {
+						wishlist = wishlist.filter((w) => w.id !== old.id);
+					}
 				}
-			})
+			)
 			// Hábitos: a linha crua do banco não tem streak/completed_today (calculados
 			// na API), então em vez de aplicar o evento direto, recarregamos a lista.
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'habits' }, scheduleHabitsRefresh)
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'habit_completions' }, scheduleHabitsRefresh)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'habits' },
+				scheduleHabitsRefresh
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'habit_completions' },
+				scheduleHabitsRefresh
+			)
 			.subscribe();
 	});
 
@@ -472,19 +532,27 @@
 			goto('/login');
 		}
 	}
-
 </script>
 
 <!-- ─── Layout ─────────────────────────────────────────── -->
-<div class="mx-auto flex min-h-screen w-full max-w-[1320px] flex-col gap-6 px-4 pt-5 pb-12 sm:px-7 sm:pt-7">
-	<AppHeader bind:activeSection {userName} {initials} onCreate={openCreate} onLogout={handleLogout} />
+<div
+	class="mx-auto flex min-h-screen w-full max-w-[1320px] flex-col gap-6 px-4 pt-5 pb-12 sm:px-7 sm:pt-7"
+>
+	<AppHeader
+		bind:activeSection
+		{userName}
+		{initials}
+		onCreate={openCreate}
+		onLogout={handleLogout}
+	/>
 
 	{#if activeSection === 'today'}
 		<!-- Hero -->
 		<section class="flex flex-wrap items-end justify-between gap-4 px-1">
 			<div class="flex flex-col gap-2">
 				<p class="text-sm font-semibold text-base-content/70">
-					{currentDate}{#if weather} · {weather.emoji} {weather.temp}°C{/if}
+					{currentDate}{#if weather}
+						· {weather.emoji} {weather.temp}°C{/if}
 				</p>
 				<h1 class="font-display hero-title">{greeting}, {firstName}.</h1>
 			</div>
@@ -496,7 +564,8 @@
 				{#if topStreak > 0}
 					<div class="hero-stat sec-protocols streak-stat">
 						<span class="hero-stat-value flex items-center gap-2">
-							<Flame size={24} fill="currentColor" />{topStreak} {topStreak === 1 ? 'dia' : 'dias'}
+							<Flame size={24} fill="currentColor" />{topStreak}
+							{topStreak === 1 ? 'dia' : 'dias'}
 						</span>
 						<span class="hero-stat-label">maior streak ativo</span>
 					</div>
@@ -523,7 +592,10 @@
 					{currentSection.label}
 				</h1>
 				{#if activeSection === 'operations' && completedTasks.length > 0}
-					<button onclick={handleClearCompleted} class="btn btn-ghost btn-sm gap-1.5 text-base-content/70 hover:text-error">
+					<button
+						onclick={handleClearCompleted}
+						class="btn gap-1.5 text-base-content/70 btn-ghost btn-sm hover:text-error"
+					>
 						<Trash2 size={14} />
 						Limpar concluídas ({completedTasks.length})
 					</button>
@@ -532,7 +604,12 @@
 
 			{#if activeSection === 'operations'}
 				{#if loading}
-					<div class="space-y-2">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-10 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-2">
+						{#each [1, 2, 3] as i (i)}<div
+								class="skeleton-pulse h-10 w-full"
+								style="animation-delay: {i * 100}ms"
+							></div>{/each}
+					</div>
 				{:else}
 					<div class="space-y-0.5">
 						{#each items as item, i (item.id)}
@@ -555,10 +632,14 @@
 						{/if}
 					</div>
 				{/if}
-
 			{:else if activeSection === 'missions'}
 				{#if loading}
-					<div class="space-y-3">{#each [1, 2] as i (i)}<div class="skeleton-pulse h-28 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-3">
+						{#each [1, 2] as i (i)}<div
+								class="skeleton-pulse h-28 w-full"
+								style="animation-delay: {i * 100}ms"
+							></div>{/each}
+					</div>
 				{:else}
 					<div class="space-y-4">
 						{#each goals as goal, i (goal.id)}
@@ -582,14 +663,23 @@
 						{/if}
 					</div>
 				{/if}
-
 			{:else if activeSection === 'protocols'}
 				{#if loading}
-					<div class="space-y-3">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-20 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-3">
+						{#each [1, 2, 3] as i (i)}<div
+								class="skeleton-pulse h-20 w-full"
+								style="animation-delay: {i * 100}ms"
+							></div>{/each}
+					</div>
 				{:else}
 					<div class="space-y-3">
 						{#each habits as habit (habit.id)}
-							<HabitCard {habit} pending={pendingIds.has(habit.id)} onToggle={handleToggleHabit} onDelete={handleDeleteHabit} />
+							<HabitCard
+								{habit}
+								pending={pendingIds.has(habit.id)}
+								onToggle={handleToggleHabit}
+								onDelete={handleDeleteHabit}
+							/>
 						{/each}
 						{#if habits.length === 0}
 							<div class="empty-state">
@@ -599,14 +689,23 @@
 						{/if}
 					</div>
 				{/if}
-
 			{:else if activeSection === 'wishlist'}
 				{#if loading}
-					<div class="space-y-3">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-20 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-3">
+						{#each [1, 2, 3] as i (i)}<div
+								class="skeleton-pulse h-20 w-full"
+								style="animation-delay: {i * 100}ms"
+							></div>{/each}
+					</div>
 				{:else}
 					<div class="space-y-3">
 						{#each wishlist as wishlistItem, i (wishlistItem.id)}
-							<WishlistCard {wishlistItem} index={i} pending={pendingIds.has(wishlistItem.id)} onDelete={handleDeleteWishlist} />
+							<WishlistCard
+								{wishlistItem}
+								index={i}
+								pending={pendingIds.has(wishlistItem.id)}
+								onDelete={handleDeleteWishlist}
+							/>
 						{/each}
 						{#if wishlist.length === 0}
 							<div class="empty-state">
@@ -616,10 +715,8 @@
 						{/if}
 					</div>
 				{/if}
-
 			{:else if activeSection === 'journal'}
 				<JournalView />
-
 			{:else if activeSection === 'finance'}
 				<FinanceDashboard />
 			{/if}
@@ -627,7 +724,13 @@
 	{/if}
 </div>
 
-<CreateDialog bind:open={createOpen} bind:kind={createKind} bind:selectedType {goals} onSubmit={handleFormSubmit} />
+<CreateDialog
+	bind:open={createOpen}
+	bind:kind={createKind}
+	bind:selectedType
+	{goals}
+	onSubmit={handleFormSubmit}
+/>
 
 <Toast />
 

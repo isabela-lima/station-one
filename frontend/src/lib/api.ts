@@ -53,8 +53,10 @@ export const items = {
 	},
 	create: (body: { content: string; goal_id?: string | null; priority?: boolean }) =>
 		request<Item>('/items', { method: 'POST', body: JSON.stringify({ type: 'task', ...body }) }),
-	update: (id: string, body: Partial<Pick<Item, 'content' | 'completed' | 'priority' | 'goal_id' | 'due_date'>>) =>
-		request<Item>(`/items/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+	update: (
+		id: string,
+		body: Partial<Pick<Item, 'content' | 'completed' | 'priority' | 'goal_id' | 'due_date'>>
+	) => request<Item>(`/items/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 	delete: (id: string) => request<void>(`/items/${id}`, { method: 'DELETE' })
 };
 
@@ -70,7 +72,10 @@ export const journal = {
 		return request<DaySummary[]>(`/journal/history?${q}`);
 	},
 	checkin: (date: string, body: { mood?: number | null; energy?: number | null }) =>
-		request<Checkin>(`/journal/days/${date}/checkin`, { method: 'PUT', body: JSON.stringify(body) }),
+		request<Checkin>(`/journal/days/${date}/checkin`, {
+			method: 'PUT',
+			body: JSON.stringify(body)
+		}),
 	addEntry: (body: { content: string; url?: string | null }) =>
 		request<LogEntry>('/journal/entries', { method: 'POST', body: JSON.stringify(body) }),
 	deleteEntry: (id: string) => request<void>(`/journal/entries/${id}`, { method: 'DELETE' })
@@ -82,8 +87,7 @@ export const habits = {
 	list: () => request<Habit[]>('/habits'),
 	create: (body: { name: string; emoji: string }) =>
 		request<Habit>('/habits', { method: 'POST', body: JSON.stringify(body) }),
-	toggleToday: (id: string) =>
-		request<Habit>(`/habits/${id}/toggle-today`, { method: 'POST' }),
+	toggleToday: (id: string) => request<Habit>(`/habits/${id}/toggle-today`, { method: 'POST' }),
 	delete: (id: string) => request<void>(`/habits/${id}`, { method: 'DELETE' })
 };
 

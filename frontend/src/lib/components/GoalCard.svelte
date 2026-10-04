@@ -48,12 +48,18 @@
 	}
 </script>
 
-<article class="mission card-enter" style="animation-delay: {Math.min(index, 8) * 50}ms" aria-labelledby="goal-{goal.id}">
+<article
+	class="mission card-enter"
+	style="animation-delay: {Math.min(index, 8) * 50}ms"
+	aria-labelledby="goal-{goal.id}"
+>
 	<header class="flex items-start justify-between gap-3">
 		<div class="flex min-w-0 flex-col gap-1">
-			<h3 id="goal-{goal.id}" class="font-display break-words text-lg">{goal.title}</h3>
+			<h3 id="goal-{goal.id}" class="font-display text-lg break-words">{goal.title}</h3>
 			<span class="text-sm text-base-content/65">
-				{#if tasks.length === 0}Nenhuma tarefa ainda{:else}{doneCount} de {tasks.length} tarefas · {Math.round(progress)}%{/if}
+				{#if tasks.length === 0}Nenhuma tarefa ainda{:else}{doneCount} de {tasks.length} tarefas · {Math.round(
+						progress
+					)}%{/if}
 			</span>
 		</div>
 		<button
@@ -68,7 +74,14 @@
 		</button>
 	</header>
 
-	<div class="bar" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso de {goal.title}">
+	<div
+		class="bar"
+		role="progressbar"
+		aria-valuenow={Math.round(progress)}
+		aria-valuemin={0}
+		aria-valuemax={100}
+		aria-label="Progresso de {goal.title}"
+	>
 		<div class="bar-fill" style="width: {progress}%"></div>
 	</div>
 
@@ -89,8 +102,19 @@
 
 	<form class="add" onsubmit={submit}>
 		<label class="sr-only" for="add-{goal.id}">Nova tarefa em {goal.title}</label>
-		<input id="add-{goal.id}" type="text" placeholder="Adicionar tarefa…" bind:value={draft} autocomplete="off" />
-		<button type="submit" class="add-btn" aria-label="Adicionar tarefa" disabled={!draft.trim() || adding}>
+		<input
+			id="add-{goal.id}"
+			type="text"
+			placeholder="Adicionar tarefa…"
+			bind:value={draft}
+			autocomplete="off"
+		/>
+		<button
+			type="submit"
+			class="add-btn"
+			aria-label="Adicionar tarefa"
+			disabled={!draft.trim() || adding}
+		>
 			<Plus size={18} />
 		</button>
 	</form>

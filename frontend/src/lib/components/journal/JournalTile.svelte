@@ -21,8 +21,18 @@
 
 	{#if journalToday.day}
 		<div class="checkins">
-			<CheckinPicker kind="mood" compact value={journalToday.day.mood} onPick={(v) => setCheckin('mood', v)} />
-			<CheckinPicker kind="energy" compact value={journalToday.day.energy} onPick={(v) => setCheckin('energy', v)} />
+			<CheckinPicker
+				kind="mood"
+				compact
+				value={journalToday.day.mood}
+				onPick={(v) => setCheckin('mood', v)}
+			/>
+			<CheckinPicker
+				kind="energy"
+				compact
+				value={journalToday.day.energy}
+				onPick={(v) => setCheckin('energy', v)}
+			/>
 		</div>
 	{/if}
 
@@ -35,7 +45,9 @@
 	{:else if journalToday.day && journalToday.day.entries.length > 0}
 		<EntryList entries={journalToday.day.entries} onDelete={deleteEntry} limit={4} />
 		{#if journalToday.day.entries.length > 4}
-			<button type="button" class="more" onclick={onOpen}>+{journalToday.day.entries.length - 4} entradas hoje</button>
+			<button type="button" class="more" onclick={onOpen}
+				>+{journalToday.day.entries.length - 4} entradas hoje</button
+			>
 		{/if}
 	{/if}
 </div>

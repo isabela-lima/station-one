@@ -37,7 +37,12 @@
 				{/if}
 			</div>
 			{#if onDelete && !e.id.startsWith('temp-')}
-				<button type="button" class="del" aria-label="Apagar entrada das {entryTime(e.created_at)}" onclick={() => onDelete?.(e.id)}>
+				<button
+					type="button"
+					class="del"
+					aria-label="Apagar entrada das {entryTime(e.created_at)}"
+					onclick={() => onDelete?.(e.id)}
+				>
 					<Trash2 size={15} />
 				</button>
 			{/if}

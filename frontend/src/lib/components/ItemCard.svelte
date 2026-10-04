@@ -24,7 +24,11 @@
 	} = $props();
 </script>
 
-<div class="row card-enter" class:done={item.completed} style="animation-delay: {Math.min(index, 10) * 30}ms">
+<div
+	class="row card-enter"
+	class:done={item.completed}
+	style="animation-delay: {Math.min(index, 10) * 30}ms"
+>
 	<button
 		type="button"
 		class="tick"
@@ -60,7 +64,12 @@
 				<Star size={16} fill={item.priority ? 'currentColor' : 'none'} />
 			</button>
 		{/if}
-		<button type="button" class="icon-btn danger" aria-label="Apagar {item.content}" onclick={() => onDelete(item.id)}>
+		<button
+			type="button"
+			class="icon-btn danger"
+			aria-label="Apagar {item.content}"
+			onclick={() => onDelete(item.id)}
+		>
 			<Trash2 size={16} />
 		</button>
 	</div>
@@ -90,7 +99,9 @@
 		border-radius: 999px;
 		border: 2px solid color-mix(in oklab, var(--color-base-content) 40%, transparent);
 		cursor: pointer;
-		transition: border-color 0.15s ease, background 0.15s ease;
+		transition:
+			border-color 0.15s ease,
+			background 0.15s ease;
 	}
 	.tick:hover {
 		border-color: var(--c-ops);

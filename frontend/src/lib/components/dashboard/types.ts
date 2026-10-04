@@ -2,7 +2,14 @@
 
 import { Sun, Zap, Target, FlameKindling, LineChart, ShoppingBag, BookOpen } from 'lucide-svelte';
 
-export type Section = 'today' | 'operations' | 'missions' | 'journal' | 'wishlist' | 'finance' | 'protocols';
+export type Section =
+	| 'today'
+	| 'operations'
+	| 'missions'
+	| 'journal'
+	| 'wishlist'
+	| 'finance'
+	| 'protocols';
 
 /** Seções criadas pelo botão "Novo" (o diário tem campo próprio na página) */
 export type CreatableSection = Exclude<Section, 'today' | 'journal'>;

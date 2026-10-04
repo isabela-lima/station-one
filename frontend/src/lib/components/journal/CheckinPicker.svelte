@@ -24,7 +24,11 @@
 
 	const title = $derived(kind === 'mood' ? 'Humor' : 'Energia');
 	const current = $derived(
-		value == null ? 'sem registro' : kind === 'mood' ? MOOD[value - 1].label : ENERGY_LABELS[value - 1]
+		value == null
+			? 'sem registro'
+			: kind === 'mood'
+				? MOOD[value - 1].label
+				: ENERGY_LABELS[value - 1]
 	);
 </script>
 
@@ -106,7 +110,10 @@
 		background: var(--color-base-100);
 		color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
 		cursor: pointer;
-		transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+		transition:
+			background 0.15s ease,
+			color 0.15s ease,
+			transform 0.1s ease;
 	}
 	.compact .opt {
 		height: 40px;
