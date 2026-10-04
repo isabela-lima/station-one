@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Loader2, Plus, CheckSquare, FileText, Link as LinkIcon, Target, Flag, ArrowRightLeft, Wallet as WalletIcon, FlameKindling } from 'lucide-svelte';
+	import { Loader2, Plus, ArrowRightLeft, Wallet as WalletIcon, FlameKindling } from 'lucide-svelte';
 	import type { Goal } from '$lib';
 	import type { Section, FormType, FormPayload } from '$lib/components/dashboard';
 	import type { Wallet } from '$lib';
@@ -20,10 +20,8 @@
 
 	// ── Internal Form State ───────────────────────────────
 	let content = $state('');
-	let linkTitle = $state('');
+	let taskGoalId = $state('');
 	let goalTitle = $state('');
-	let milestoneTitle = $state('');
-	let milestoneGoalId = $state('');
 	let wishlistUrl = $state('');
 	let wishlistFetching = $state(false);
 	let wishlistPreview = $state<{
@@ -91,23 +89,14 @@
 
 	// ── Submit ────────────────────────────────────────────
 	async function handleSubmit() {
-		if (selectedType === 'note' || selectedType === 'task') {
+		if (selectedType === 'task') {
 			if (!content.trim()) return;
-			await onSubmit({ kind: 'item', type: selectedType, content: content.trim(), completed: false, priority: false });
+			await onSubmit({ kind: 'task', content: content.trim(), goal_id: taskGoalId || null });
 			content = '';
-		} else if (selectedType === 'link') {
-			if (!content.trim()) return;
-			await onSubmit({ kind: 'item', type: 'link', content: content.trim(), title: linkTitle.trim() || undefined, completed: false, priority: false });
-			content = '';
-			linkTitle = '';
 		} else if (selectedType === 'goal') {
 			if (!goalTitle.trim()) return;
 			await onSubmit({ kind: 'goal', title: goalTitle.trim() });
 			goalTitle = '';
-		} else if (selectedType === 'milestone') {
-			if (!milestoneTitle.trim() || !milestoneGoalId) return;
-			await onSubmit({ kind: 'milestone', title: milestoneTitle.trim(), goal_id: milestoneGoalId });
-			milestoneTitle = '';
 		} else if (selectedType === 'wishlist') {
 			if (!wishlistUrl.trim()) return;
 			await onSubmit({
@@ -161,9 +150,7 @@
 		activeSection === 'operations'
 			? 'Criar Operação'
 			: activeSection === 'missions'
-				? selectedType === 'goal'
-					? 'Criar Missão'
-					: 'Criar Marco'
+				? 'Criar Missão'
 				: activeSection === 'protocols'
 					? 'Criar Protocolo'
 					: activeSection === 'finance'
@@ -172,17 +159,6 @@
 							: 'Criar Carteira'
 						: 'Adicionar à Wishlist'
 	);
-
-	const OPS_TYPES = [
-		{ v: 'task' as FormType, label: 'Tarefa', Icon: CheckSquare },
-		{ v: 'note' as FormType, label: 'Nota', Icon: FileText },
-		{ v: 'link' as FormType, label: 'Link', Icon: LinkIcon }
-	];
-
-	const MISSION_TYPES = [
-		{ v: 'goal' as FormType, label: 'Missão', Icon: Target },
-		{ v: 'milestone' as FormType, label: 'Marco', Icon: Flag }
-	];
 
 	const FINANCE_TYPES = [
 		{ v: 'transaction' as FormType, label: 'Transação', Icon: ArrowRightLeft },
@@ -193,64 +169,30 @@
 <form class="space-y-3" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
 
 	{#if activeSection === 'operations'}
-		<!-- Type tabs -->
-		<div class="flex gap-1 rounded-lg p-1" style="background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border: 1px solid color-mix(in oklab, var(--color-primary) 8%, transparent)">
-			{#each OPS_TYPES as opt (opt.v)}
-				<button
-					type="button"
-					onclick={() => (selectedType = opt.v)}
-					class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all duration-150"
-					style={selectedType === opt.v
-						? 'background: color-mix(in oklab, var(--color-primary) 15%, transparent); color: var(--color-primary); border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent)'
-						: 'background: transparent; color: var(--color-base-content); opacity: 0.4; border: 1px solid transparent'}
-				>
-					<opt.Icon size={11} />
-					{opt.label}
-				</button>
-			{/each}
-		</div>
-
-		{#if selectedType === 'link'}
-			<input class="input input-sm input-bordered w-full" style={S.cyan} type="text" placeholder="Título (opcional)" bind:value={linkTitle} />
-			<input class="input input-sm input-bordered w-full" style={S.cyan} type="url"  placeholder="https://exemplo.com" bind:value={content} required />
-		{:else}
-			<textarea
-				class="textarea textarea-bordered h-24 resize-none text-sm w-full"
-				style={S.cyan}
-				placeholder={selectedType === 'task' ? 'Ex: Revisar relatório...' : 'Escreva sua nota...'}
-				bind:value={content}
-			></textarea>
+		<label class="sr-only" for="task-content">Tarefa</label>
+		<textarea
+			id="task-content"
+			class="textarea textarea-bordered h-24 resize-none text-sm w-full"
+			style={S.cyan}
+			placeholder="Ex: Revisar relatório…"
+			bind:value={content}
+		></textarea>
+		{#if goals.length > 0}
+			<label class="flex flex-col gap-1.5 text-xs text-base-content/70">
+				Missão (opcional)
+				<select class="select select-sm select-bordered w-full" style={S.cyan} bind:value={taskGoalId}>
+					<option value="">Sem missão</option>
+					{#each goals as g (g.id)}
+						<option value={g.id}>{g.title}</option>
+					{/each}
+				</select>
+			</label>
 		{/if}
 
 	{:else if activeSection === 'missions'}
-		<!-- Type tabs -->
-		<div class="flex gap-1 rounded-lg p-1" style="background: color-mix(in oklab, var(--color-base-content) 4%, transparent); border: 1px solid color-mix(in oklab, var(--color-secondary) 10%, transparent)">
-			{#each MISSION_TYPES as opt (opt.v)}
-				<button
-					type="button"
-					onclick={() => (selectedType = opt.v)}
-					class="flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all duration-150"
-					style={selectedType === opt.v
-						? 'background: color-mix(in oklab, var(--color-secondary) 15%, transparent); color: var(--color-secondary); border: 1px solid color-mix(in oklab, var(--color-secondary) 30%, transparent)'
-						: 'background: transparent; color: var(--color-base-content); opacity: 0.4; border: 1px solid transparent'}
-				>
-					<opt.Icon size={11} />
-					{opt.label}
-				</button>
-			{/each}
-		</div>
-
-		{#if selectedType === 'goal'}
-			<input class="input input-sm input-bordered w-full" style={S.violet} type="text" placeholder="Ex: Aprender Rust" bind:value={goalTitle} required />
-		{:else}
-			<select class="select select-sm select-bordered w-full" style={S.violet} bind:value={milestoneGoalId} required>
-				<option value="" disabled>Selecione a missão</option>
-				{#each goals as g (g.id)}
-					<option value={g.id}>{g.title}</option>
-				{/each}
-			</select>
-			<input class="input input-sm input-bordered w-full" style={S.violet} type="text" placeholder="Ex: Completar o capítulo 3" bind:value={milestoneTitle} required />
-		{/if}
+		<label class="sr-only" for="goal-title">Missão</label>
+		<input id="goal-title" class="input input-sm input-bordered w-full" style={S.violet} type="text" placeholder="Ex: Aprender Rust" bind:value={goalTitle} required />
+		<p class="text-xs text-base-content/60">Depois de criar, adicione as tarefas da missão na página Missões.</p>
 
 	{:else if activeSection === 'finance'}
 		<!-- Type tabs -->

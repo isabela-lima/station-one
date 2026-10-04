@@ -1,11 +1,11 @@
 // ─── Shared Dashboard Types ───────────────────────────────────────────────────
 
-import { Sun, Zap, Target, FlameKindling, LineChart, ShoppingBag } from 'lucide-svelte';
+import { Sun, Zap, Target, FlameKindling, LineChart, ShoppingBag, BookOpen } from 'lucide-svelte';
 
-export type Section = 'today' | 'operations' | 'missions' | 'wishlist' | 'finance' | 'protocols';
+export type Section = 'today' | 'operations' | 'missions' | 'journal' | 'wishlist' | 'finance' | 'protocols';
 
-/** Seções que têm formulário de criação (todas menos 'today') */
-export type CreatableSection = Exclude<Section, 'today'>;
+/** Seções criadas pelo botão "Novo" (o diário tem campo próprio na página) */
+export type CreatableSection = Exclude<Section, 'today' | 'journal'>;
 
 /** Ordem da navegação; `color` mapeia para a classe .sec-<color> (tokens do tema) */
 export const SECTIONS = [
@@ -13,6 +13,7 @@ export const SECTIONS = [
 	{ id: 'operations', label: 'Operações', color: 'ops', Icon: Zap },
 	{ id: 'missions', label: 'Missões', color: 'missions', Icon: Target },
 	{ id: 'protocols', label: 'Protocolos', color: 'protocols', Icon: FlameKindling },
+	{ id: 'journal', label: 'Diário', color: 'journal', Icon: BookOpen },
 	{ id: 'finance', label: 'Finanças', color: 'finance', Icon: LineChart },
 	{ id: 'wishlist', label: 'Wishlist', color: 'wishlist', Icon: ShoppingBag }
 ] as const satisfies readonly { id: Section; label: string; color: string; Icon: unknown }[];
@@ -20,19 +21,11 @@ export const SECTIONS = [
 export function sectionColor(id: Section): string {
 	return SECTIONS.find((s) => s.id === id)?.color ?? 'today';
 }
-export type FormType = 'note' | 'task' | 'link' | 'goal' | 'milestone' | 'wishlist' | 'transaction' | 'wallet' | 'habit';
+export type FormType = 'task' | 'goal' | 'wishlist' | 'transaction' | 'wallet' | 'habit';
 
 export type FormPayload =
-	| {
-			kind: 'item';
-			type: 'note' | 'task' | 'link';
-			content: string;
-			title?: string;
-			completed: boolean;
-			priority: boolean;
-	  }
+	| { kind: 'task'; content: string; goal_id: string | null }
 	| { kind: 'goal'; title: string }
-	| { kind: 'milestone'; title: string; goal_id: string }
 	| {
 			kind: 'wishlist';
 			title: string;

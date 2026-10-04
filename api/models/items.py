@@ -13,10 +13,14 @@ class Item(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    type: Mapped[str] = mapped_column(String(10), nullable=False)  # note | task | link
+    type: Mapped[str] = mapped_column(String(10), nullable=False)  # task (note/link: legado, migrados p/ o diário)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     title: Mapped[str | None] = mapped_column(Text)
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
     priority: Mapped[bool] = mapped_column(Boolean, default=False)
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    goal_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("goals.id", ondelete="SET NULL"), index=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

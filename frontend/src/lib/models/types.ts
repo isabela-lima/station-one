@@ -6,27 +6,64 @@ export interface Toast {
 	type: 'success' | 'error' | 'info';
 }
 
-// ─── Items / Goals / Milestones ───────────────────────────────────────────────
+// ─── Tarefas / Missões ───────────────────────────────────────────────
 
 export interface Item {
 	id: string;
 	user_id: string;
-	type: 'note' | 'task' | 'link';
+	type: 'task';
 	content: string;
-	title?: string;
+	title?: string | null;
 	completed: boolean;
 	priority: boolean;
-	due_date?: string;
+	due_date?: string | null;
+	/** Missão à qual a tarefa pertence (antes: "marco") */
+	goal_id: string | null;
+	completed_at: string | null;
 	created_at: string;
 }
 
-export interface DailyLog {
+// ─── Diário de bordo ──────────────────────────────────────────────────────────
+
+export interface LogEntry {
 	id: string;
-	user_id: string;
 	date: string;
 	content: string;
+	url: string | null;
 	created_at: string;
-	updated_at: string;
+}
+
+export interface Recap {
+	tasks_done: string[];
+	habits_done: { name: string; emoji: string }[];
+	spent: number;
+	income: number;
+	top_categories: { category: string; amount: number }[];
+}
+
+export interface JournalDay {
+	date: string;
+	mood: number | null;
+	energy: number | null;
+	entries: LogEntry[];
+	recap: Recap;
+}
+
+export interface DaySummary {
+	date: string;
+	mood: number | null;
+	energy: number | null;
+	entries_count: number;
+	first_entry: string | null;
+	tasks_done: number;
+	habits_done: number;
+	spent: number;
+}
+
+export interface Checkin {
+	date: string;
+	mood: number | null;
+	energy: number | null;
 }
 
 export interface Habit {
@@ -43,15 +80,6 @@ export interface Goal {
 	id: string;
 	user_id: string;
 	title: string;
-	created_at: string;
-}
-
-export interface Milestone {
-	id: string;
-	user_id: string;
-	goal_id: string;
-	title: string;
-	completed: boolean;
 	created_at: string;
 }
 

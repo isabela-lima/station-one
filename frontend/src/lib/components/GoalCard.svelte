@@ -1,119 +1,183 @@
 <script lang="ts">
-	import type { Goal, Milestone } from '$lib';
-	import { Target, Flag, Trash2, CheckCircle2, Circle } from 'lucide-svelte';
+	import type { Goal, Item } from '$lib';
+	import { Trash2, Plus } from 'lucide-svelte';
+	import ItemCard from './ItemCard.svelte';
 
 	let {
 		goal,
-		milestones,
-		onToggleMilestone,
+		tasks,
+		onToggleTask,
+		onDeleteTask,
+		onTogglePriority,
+		onAddTask,
 		onDeleteGoal,
-		onDeleteMilestone,
 		pendingIds = new Set<string>(),
 		index = 0
 	}: {
 		goal: Goal;
-		milestones: Milestone[];
-		onToggleMilestone: (milestoneId: string) => void;
+		/** Tarefas desta missão */
+		tasks: Item[];
+		onToggleTask: (id: string) => void;
+		onDeleteTask: (id: string) => void;
+		onTogglePriority: (id: string) => void;
+		onAddTask: (goalId: string, content: string) => Promise<void>;
 		onDeleteGoal: (goalId: string) => void;
-		onDeleteMilestone: (milestoneId: string) => void;
 		pendingIds?: Set<string>;
 		index?: number;
 	} = $props();
 
-	const completedCount = $derived(milestones.filter((m) => m.completed).length);
-	const progress = $derived(milestones.length > 0 ? (completedCount / milestones.length) * 100 : 0);
+	const doneCount = $derived(tasks.filter((t) => t.completed).length);
+	const progress = $derived(tasks.length > 0 ? (doneCount / tasks.length) * 100 : 0);
+	// Pendentes primeiro, concluídas no fim
+	const ordered = $derived([...tasks].sort((a, b) => Number(a.completed) - Number(b.completed)));
+
+	let draft = $state('');
+	let adding = $state(false);
+
+	async function submit(e: SubmitEvent) {
+		e.preventDefault();
+		const content = draft.trim();
+		if (!content || adding) return;
+		adding = true;
+		try {
+			await onAddTask(goal.id, content);
+			draft = '';
+		} finally {
+			adding = false;
+		}
+	}
 </script>
 
-<div
-	class="glass-card card-enter group relative p-4"
-	style="animation-delay: {index * 60}ms"
->
-	<!-- Goal header -->
-	<div class="mb-3 flex items-start justify-between gap-2">
-		<div class="flex items-center gap-2">
-			<div
-				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-				style="background: color-mix(in oklab, var(--color-secondary) 15%, transparent); border: 1px solid color-mix(in oklab, var(--color-secondary) 30%, transparent)"
-			>
-				<Target size={14} class="text-secondary" />
-			</div>
-			<h3 class="font-semibold text-base-content">{goal.title}</h3>
+<article class="mission card-enter" style="animation-delay: {Math.min(index, 8) * 50}ms" aria-labelledby="goal-{goal.id}">
+	<header class="flex items-start justify-between gap-3">
+		<div class="flex min-w-0 flex-col gap-1">
+			<h3 id="goal-{goal.id}" class="font-display break-words text-lg">{goal.title}</h3>
+			<span class="text-sm text-base-content/65">
+				{#if tasks.length === 0}Nenhuma tarefa ainda{:else}{doneCount} de {tasks.length} tarefas · {Math.round(progress)}%{/if}
+			</span>
 		</div>
 		<button
-			onclick={() => onDeleteGoal(goal.id)}
-			class="btn btn-ghost btn-xs text-error/50 hover:text-error rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-			title="Deletar missão"
-			aria-label="Deletar missão"
+			type="button"
+			class="icon-btn"
+			aria-label="Apagar missão {goal.title}"
+			title="Apagar missão (as tarefas continuam, sem missão)"
 			disabled={pendingIds.has(goal.id)}
+			onclick={() => onDeleteGoal(goal.id)}
 		>
-			{#if pendingIds.has(goal.id)}
-				<span class="loading loading-spinner loading-xs"></span>
-			{:else}
-				<Trash2 size={13} />
-			{/if}
+			<Trash2 size={16} />
 		</button>
+	</header>
+
+	<div class="bar" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso de {goal.title}">
+		<div class="bar-fill" style="width: {progress}%"></div>
 	</div>
 
-	<!-- Progress bar -->
-	{#if milestones.length > 0}
-		<div class="mb-3">
-			<div class="mb-1 flex items-center justify-between text-[10px] text-base-content/40">
-				<span>{completedCount}/{milestones.length} marcos</span>
-				<span>{Math.round(progress)}%</span>
-			</div>
-			<div class="h-1 w-full overflow-hidden rounded-full" style="background: color-mix(in oklab, var(--color-base-content) 6%, transparent)">
-				<div
-					class="h-full rounded-full transition-all duration-500"
-					style="width: {progress}%; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary))"
-				></div>
-			</div>
+	{#if ordered.length > 0}
+		<div class="flex flex-col">
+			{#each ordered as task, i (task.id)}
+				<ItemCard
+					item={task}
+					index={i}
+					pending={pendingIds.has(task.id)}
+					onToggle={onToggleTask}
+					onDelete={onDeleteTask}
+					{onTogglePriority}
+				/>
+			{/each}
 		</div>
 	{/if}
 
-	<!-- Milestones -->
-	<ul class="space-y-2">
-		{#each milestones as milestone (milestone.id)}
-			<li class="group/ms flex items-center gap-2">
-				<button
-					onclick={() => onToggleMilestone(milestone.id)}
-					class="shrink-0 text-base-content/30 transition-colors hover:text-primary"
-					class:text-primary={milestone.completed}
-					aria-label="Alternar marco"
-					disabled={pendingIds.has(milestone.id)}
-				>
-					{#if milestone.completed}
-						<CheckCircle2 size={15} />
-					{:else}
-						<Circle size={15} />
-					{/if}
-				</button>
-				<span
-					class="flex-1 text-sm"
-					class:line-through={milestone.completed}
-					class:opacity-40={milestone.completed}
-				>
-					{milestone.title}
-				</span>
-				<button
-					onclick={() => onDeleteMilestone(milestone.id)}
-					class="btn btn-ghost btn-xs text-error/40 hover:text-error rounded-full opacity-0 transition-opacity group-hover/ms:opacity-100 shrink-0 p-0 w-5 h-5 min-h-0"
-					title="Deletar marco"
-					aria-label="Deletar marco"
-					disabled={pendingIds.has(milestone.id)}
-				>
-					{#if pendingIds.has(milestone.id)}
-						<span class="loading loading-spinner loading-xs"></span>
-					{:else}
-						<Trash2 size={11} />
-					{/if}
-				</button>
-			</li>
-		{/each}
-		{#if milestones.length === 0}
-			<li class="flex items-center gap-2 text-xs text-base-content/30 italic">
-				<Flag size={11} />
-				<span>Nenhum marco ainda.</span>
-			</li>
-		{/if}
-	</ul>
-</div>
+	<form class="add" onsubmit={submit}>
+		<label class="sr-only" for="add-{goal.id}">Nova tarefa em {goal.title}</label>
+		<input id="add-{goal.id}" type="text" placeholder="Adicionar tarefa…" bind:value={draft} autocomplete="off" />
+		<button type="submit" class="add-btn" aria-label="Adicionar tarefa" disabled={!draft.trim() || adding}>
+			<Plus size={18} />
+		</button>
+	</form>
+</article>
+
+<style>
+	.mission {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		padding: 18px;
+		border-radius: var(--radius-box);
+		background: var(--color-base-100);
+		border: 1px solid var(--color-base-300);
+	}
+
+	.bar {
+		height: 8px;
+		border-radius: 999px;
+		background: var(--c-missions-soft);
+		overflow: hidden;
+	}
+	.bar-fill {
+		height: 100%;
+		border-radius: 999px;
+		background: var(--c-missions);
+		transition: width 0.3s ease;
+	}
+
+	.add {
+		display: flex;
+		gap: 8px;
+	}
+	.add input {
+		flex: 1;
+		min-width: 0;
+		min-height: 44px;
+		padding: 0 14px;
+		border-radius: var(--radius-field);
+		background: var(--color-base-200);
+		border: 1px solid var(--color-base-300);
+		color: var(--color-base-content);
+		font-size: 15px;
+		outline: none;
+	}
+	.add input::placeholder {
+		color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+	}
+	.add input:focus {
+		border-color: var(--c-missions);
+	}
+	.add-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		flex-shrink: 0;
+		border-radius: var(--radius-field);
+		background: var(--c-missions);
+		color: var(--color-base-100);
+		cursor: pointer;
+	}
+	.add-btn:disabled {
+		opacity: 0.35;
+		cursor: default;
+	}
+
+	.icon-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		flex-shrink: 0;
+		border-radius: 999px;
+		color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+		cursor: pointer;
+	}
+	.icon-btn:hover {
+		background: var(--color-base-300);
+		color: var(--color-error);
+	}
+
+	button:focus-visible,
+	input:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+</style>

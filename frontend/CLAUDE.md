@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projeto
 
-**Station One** é um dashboard pessoal PWA estilo "space station" — relógio, clima, operações (tarefas/notas/links), missões (metas + marcos), protocolos (hábitos com streak), log diário, wishlist e finanças. Tema escuro com glassmorphism, acentos ciano/roxo.
+**Station One** é um dashboard pessoal PWA estilo "space station" — relógio, clima, operações (tarefas), missões (projetos que agrupam tarefas), protocolos (hábitos com streak), diário de bordo (entradas com hora, humor/energia e resumo automático do dia), wishlist e finanças. Tema escuro com glassmorphism, acentos ciano/roxo.
 
 - **Notion (planejamento):** https://www.notion.so/361ba7a32d94810baa54f3fd05f70dcf
 - **Kanban de tarefas:** https://www.notion.so/e52fa9959a554f9ab97a47b855de5635
@@ -39,10 +39,17 @@ Toda chamada ao FastAPI passa o JWT do Supabase no header `Authorization: Bearer
 ### Fluxo de dados no dashboard (`src/routes/+page.svelte`)
 
 1. `onMount` → busca todos os dados via `api.*` em paralelo com `Promise.all`
-2. Supabase realtime via `postgres_changes` mantém sincronização ao vivo para `items`, `goals`, `milestones`, `wishlist` (aplicando a linha do evento) e `habits`/`habit_completions` (refetch via API, porque `streak`/`completed_today` são calculados no backend)
+2. Supabase realtime via `postgres_changes` mantém sincronização ao vivo para `items`, `goals`, `wishlist` (aplicando a linha do evento), `habits`/`habit_completions` (refetch via API, porque `streak`/`completed_today` são calculados no backend) e `log_entries` (recarrega o dia do diário)
 3. Toda chamada à API envia `X-Timezone` — o backend usa para saber o "hoje" do usuário (dependência `Today` em `api/deps.py`)
-4. Todo estado é Svelte 5 `$state` — sem stores externos exceto `toasts` (writable store em `toast.ts`)
-5. `onDestroy` limpa todas as subscriptions do Supabase
+4. Todo estado é Svelte 5 `$state`. Exceções: `toasts` (writable store em `toast.ts`) e o diário de hoje (`journal.svelte.ts`), compartilhado entre o tile de "Hoje" e a página do Diário
+5. Ações de clique são otimistas: atualize o estado local primeiro, chame a API e, se falhar, desfaça só o item afetado (veja `handleToggleItem`)
+6. `onDestroy` limpa todas as subscriptions do Supabase
+
+### Tarefas, missões e diário
+
+- **Tarefa** = `Item` com `type: 'task'`. Pode pertencer a uma **missão** (`goal_id`); o progresso da missão é tarefas concluídas / total. Os antigos "marcos" viraram tarefas da missão.
+- `completed_at` é preenchido pela API ao concluir e alimenta o resumo do dia.
+- **Diário** (`/journal` na API): entradas curtas com hora (`log_entries`; um link no texto vira `url`), check-in de humor/energia 1–5 (`daily_logs`) e um resumo montado pela API com tarefas concluídas, protocolos feitos e gastos do dia. Notas e links que ficavam em Operações agora são entradas do diário.
 
 ### Formulário unificado
 
@@ -51,9 +58,8 @@ Toda chamada ao FastAPI passa o JWT do Supabase no header `Authorization: Bearer
 ```ts
 // FormPayload — sempre use o campo `kind` para discriminar
 type FormPayload =
-  | { kind: 'item'; type: 'note' | 'task' | 'link'; ... }
+  | { kind: 'task'; content: string; goal_id: string | null }
   | { kind: 'goal'; title: string }
-  | { kind: 'milestone'; title: string; goal_id: string }
   | { kind: 'wishlist'; ... }
   | { kind: 'transaction'; ... }
   | { kind: 'wallet'; ... }
@@ -63,7 +69,7 @@ type FormPayload =
 ### Navegação/layout
 
 - `AppHeader` no topo: chips das seções (rolam na horizontal no celular), botão **Novo** e menu do avatar (tema + sair).
-- Seção ativa controlada pelo tipo `Section` (`'today' | 'operations' | ...`); a ordem, rótulo, ícone e cor de cada seção ficam em `SECTIONS` (`dashboard/types.ts`).
+- Seção ativa controlada pelo tipo `Section` (`'today' | 'operations' | ...`); a ordem, rótulo, ícone e cor de cada seção ficam em `SECTIONS` (`dashboard/types.ts`). O Diário não usa o botão **Novo**: as entradas são criadas no campo da própria página (e no tile de "Hoje").
 - `today` é a tela inicial (`components/today/TodayView.svelte`): três colunas de tiles que empilham de forma independente. As outras seções são uma página com um único `.tile`.
 
 ## Design System

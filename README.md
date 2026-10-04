@@ -42,11 +42,18 @@ station-one/
 
 ### 1. Banco de dados (uma vez só)
 
-No painel do Supabase, vá em **SQL Editor** e execute:
+No painel do Supabase, vá em **SQL Editor** e execute, nesta ordem:
 
 ```
 api/migrations/init.sql
+api/migrations/phase3.sql
+api/supabase/migrations/20261004000000_enable_realtime.sql
+api/supabase/migrations/20261004010000_tasks_missions_journal.sql
 ```
+
+As migrações em `api/supabase/migrations/` são idempotentes (podem rodar de novo sem efeito).
+
+Em **Authentication → URL Configuration → Redirect URLs**, adicione `http://localhost:5173/login?reset=1` (e o equivalente em produção) para o fluxo de "esqueci minha senha".
 
 ### 2. Variáveis de ambiente
 
@@ -81,8 +88,10 @@ Docs da API disponíveis em `http://localhost:8000/docs` (apenas em `ENVIRONMENT
 
 | Seção | O que faz |
 |-------|-----------|
-| **Operações** | Tarefas, notas e links do dia. Foco (⚡) e bulk delete de concluídas. |
-| **Missões** | Metas de longo prazo com marcos e barra de progresso. |
+| **Hoje** | Tela inicial: tarefas pendentes, protocolos, finanças, diário e progresso das missões. |
+| **Operações** | Tarefas, cada uma opcionalmente ligada a uma missão. Foco (⭐) e limpeza das concluídas. |
+| **Missões** | Projetos que agrupam tarefas, com barra de progresso. |
+| **Diário** | Entradas com hora, humor/energia do dia e resumo automático (tarefas, protocolos, gastos), com histórico. |
 | **Protocolos** | Hábitos diários com streak 🔥 |
 | **Wishlist** | Lista de desejos com preço atual vs. meta. |
 | **Finanças** | Carteiras, transações, orçamentos e dívidas. |
@@ -95,7 +104,7 @@ Docs da API disponíveis em `http://localhost:8000/docs` (apenas em `ENVIRONMENT
 Browser
   │
   ├── Supabase Auth (JWT)
-  ├── Supabase Realtime ──► itens, metas, marcos, wishlist, hábitos
+  ├── Supabase Realtime ──► tarefas, missões, wishlist, hábitos, diário
   └── FastAPI ──► lógica de negócio
         └── PostgreSQL (Supabase)
 ```

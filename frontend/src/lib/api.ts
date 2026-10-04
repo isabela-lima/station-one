@@ -1,7 +1,10 @@
 import { PUBLIC_API_URL } from '$env/static/public';
 import type {
 	Budget,
-	DailyLog,
+	Checkin,
+	DaySummary,
+	JournalDay,
+	LogEntry,
 	Debt,
 	DebtProjection,
 	FinanceOverview,
@@ -9,7 +12,6 @@ import type {
 	Habit,
 	HealthLog,
 	Item,
-	Milestone,
 	PersonalROI,
 	SimulatorResponse,
 	Transaction,
@@ -39,29 +41,39 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	return res.json();
 }
 
-// ─── Items ────────────────────────────────────────────────
+// ─── Tarefas ──────────────────────────────────────────────
 
 export const items = {
-	list: (params?: { type?: string; priority?: boolean; completed?: boolean }) => {
-		const q = new URLSearchParams();
-		if (params?.type) q.set('type', params.type);
+	list: (params?: { goal_id?: string; priority?: boolean; completed?: boolean }) => {
+		const q = new URLSearchParams({ type: 'task' });
+		if (params?.goal_id) q.set('goal_id', params.goal_id);
 		if (params?.priority !== undefined) q.set('priority', String(params.priority));
 		if (params?.completed !== undefined) q.set('completed', String(params.completed));
 		return request<Item[]>(`/items?${q}`);
 	},
-	create: (body: Omit<Item, 'id' | 'user_id' | 'created_at'>) =>
-		request<Item>('/items', { method: 'POST', body: JSON.stringify(body) }),
-	update: (id: string, body: Partial<Item>) =>
+	create: (body: { content: string; goal_id?: string | null; priority?: boolean }) =>
+		request<Item>('/items', { method: 'POST', body: JSON.stringify({ type: 'task', ...body }) }),
+	update: (id: string, body: Partial<Pick<Item, 'content' | 'completed' | 'priority' | 'goal_id' | 'due_date'>>) =>
 		request<Item>(`/items/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 	delete: (id: string) => request<void>(`/items/${id}`, { method: 'DELETE' })
 };
 
-// ─── Daily Log ─────────────────────────────────────────
+// ─── Diário de bordo ────────────────────────────────────
 
-export const dailyLogs = {
-	today: () => request<DailyLog>('/daily-logs/today'),
-	update: (content: string) =>
-		request<DailyLog>('/daily-logs/today', { method: 'PATCH', body: JSON.stringify({ content }) })
+export const journal = {
+	today: () => request<JournalDay>('/journal/today'),
+	day: (date: string) => request<JournalDay>(`/journal/days/${date}`),
+	history: (params?: { before?: string; days?: number }) => {
+		const q = new URLSearchParams();
+		if (params?.before) q.set('before', params.before);
+		if (params?.days) q.set('days', String(params.days));
+		return request<DaySummary[]>(`/journal/history?${q}`);
+	},
+	checkin: (date: string, body: { mood?: number | null; energy?: number | null }) =>
+		request<Checkin>(`/journal/days/${date}/checkin`, { method: 'PUT', body: JSON.stringify(body) }),
+	addEntry: (body: { content: string; url?: string | null }) =>
+		request<LogEntry>('/journal/entries', { method: 'POST', body: JSON.stringify(body) }),
+	deleteEntry: (id: string) => request<void>(`/journal/entries/${id}`, { method: 'DELETE' })
 };
 
 // ─── Habits ─────────────────────────────────────────────
@@ -82,20 +94,6 @@ export const goals = {
 	create: (body: { title: string }) =>
 		request<Goal>('/goals', { method: 'POST', body: JSON.stringify(body) }),
 	delete: (id: string) => request<void>(`/goals/${id}`, { method: 'DELETE' })
-};
-
-// ─── Milestones ───────────────────────────────────────────
-
-export const milestones = {
-	list: (goalId?: string) => {
-		const q = goalId ? `?goal_id=${goalId}` : '';
-		return request<Milestone[]>(`/milestones${q}`);
-	},
-	create: (body: { goal_id: string; title: string }) =>
-		request<Milestone>('/milestones', { method: 'POST', body: JSON.stringify(body) }),
-	update: (id: string, body: { completed?: boolean; title?: string }) =>
-		request<Milestone>(`/milestones/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-	delete: (id: string) => request<void>(`/milestones/${id}`, { method: 'DELETE' })
 };
 
 // ─── Wishlist ─────────────────────────────────────────────

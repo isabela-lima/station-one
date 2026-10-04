@@ -158,3 +158,4 @@ def get_user_today(
 CurrentUser = Annotated[str, Depends(get_current_user_id)]
 DB = Annotated[AsyncSession, Depends(get_db)]
 Today = Annotated[date, Depends(get_user_today)]
+UserTZ = Annotated[Optional[ZoneInfo], Depends(get_user_tz)]

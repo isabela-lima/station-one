@@ -18,7 +18,7 @@
 		onSubmit: (payload: FormPayload) => Promise<void>;
 	} = $props();
 
-	const KINDS = SECTIONS.filter((s) => s.id !== 'today') as unknown as {
+	const KINDS = SECTIONS.filter((s) => s.id !== 'today' && s.id !== 'journal') as unknown as {
 		id: CreatableSection;
 		label: string;
 		color: string;

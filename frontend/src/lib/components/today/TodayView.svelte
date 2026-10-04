@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Check, Link as LinkIcon, FileText, ArrowRight, Star } from 'lucide-svelte';
+	import { Check, ArrowRight, Star } from 'lucide-svelte';
 	import * as api from '$lib/api';
-	import type { FinanceOverview, Goal, Habit, Item, Milestone, Section } from '$lib';
-	import DailyLog from '$lib/components/DailyLog.svelte';
+	import type { FinanceOverview, Goal, Habit, Item, Section } from '$lib';
+	import JournalTile from '$lib/components/journal/JournalTile.svelte';
 
 	let {
 		items,
 		habits,
 		goals,
-		milestones,
 		loading,
 		pendingIds,
 		onToggleItem,
@@ -19,7 +18,6 @@
 		items: Item[];
 		habits: Habit[];
 		goals: Goal[];
-		milestones: Milestone[];
 		loading: boolean;
 		pendingIds: Set<string>;
 		onToggleItem: (id: string) => void;
@@ -29,6 +27,7 @@
 
 	// ─── Operações ────────────────────────────────────
 	const tasks = $derived(items.filter((i) => i.type === 'task'));
+	const goalTitle = $derived(new Map(goals.map((g) => [g.id, g.title])));
 	// Tarefas concluídas aqui continuam visíveis (riscadas) até sair da tela,
 	// para dar para ver o que foi feito e desfazer um clique errado.
 	let justDone = $state<Set<string>>(new Set());
@@ -46,7 +45,6 @@
 			.slice(0, 6)
 	);
 	const doneCount = $derived(tasks.filter((t) => t.completed).length);
-	const refs = $derived(items.filter((i) => i.type !== 'task').slice(0, 3));
 
 	// ─── Protocolos ───────────────────────────────────
 	const habitsDone = $derived(habits.filter((h) => h.completed_today).length);
@@ -54,9 +52,9 @@
 	// ─── Missões ──────────────────────────────────────
 	const missionProgress = $derived(
 		goals.slice(0, 4).map((g) => {
-			const ms = milestones.filter((m) => m.goal_id === g.id);
-			const done = ms.filter((m) => m.completed).length;
-			return { goal: g, done, total: ms.length, pct: ms.length ? (done / ms.length) * 100 : 0 };
+			const own = tasks.filter((t) => t.goal_id === g.id);
+			const done = own.filter((t) => t.completed).length;
+			return { goal: g, done, total: own.length, pct: own.length ? (done / own.length) * 100 : 0 };
 		})
 	);
 
@@ -74,14 +72,6 @@
 
 	function brl(value: number, currency = 'BRL') {
 		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(value);
-	}
-
-	function hostOf(url: string) {
-		try {
-			return new URL(url).hostname.replace(/^www\./, '');
-		} catch {
-			return url;
-		}
 	}
 
 </script>
@@ -113,7 +103,12 @@
 						>
 							{#if t.completed}<Check size={14} strokeWidth={3.5} />{/if}
 						</button>
-						<span class="task-text flex-1 min-w-0 break-words">{t.content}</span>
+						<span class="flex min-w-0 flex-1 flex-col gap-1">
+							<span class="task-text break-words">{t.content}</span>
+							{#if t.goal_id && goalTitle.has(t.goal_id)}
+								<span class="mission-tag">{goalTitle.get(t.goal_id)}</span>
+							{/if}
+						</span>
 						{#if t.priority}
 							<Star size={15} fill="currentColor" style="color: var(--c-protocols)" aria-label="Foco" />
 						{/if}
@@ -122,24 +117,6 @@
 			</ul>
 		{/if}
 
-		{#if refs.length > 0}
-			<div class="flex flex-col gap-2">
-				{#each refs as r (r.id)}
-					{#if r.type === 'link'}
-						<a class="ref" href={r.content} target="_blank" rel="noopener noreferrer">
-							<LinkIcon size={17} />
-							<span class="font-semibold">{r.title || hostOf(r.content)}</span>
-							<span class="ref-sub">{hostOf(r.content)}</span>
-						</a>
-					{:else}
-						<div class="ref">
-							<FileText size={17} />
-							<span class="truncate">{r.content}</span>
-						</div>
-					{/if}
-				{/each}
-			</div>
-		{/if}
 
 		<button type="button" class="more" onclick={() => onOpenSection('operations')}>
 			Ver todas <ArrowRight size={15} />
@@ -185,9 +162,9 @@
 		{/if}
 	</section>
 
-	<!-- ── Log ────────────────────────────────────────── -->
-	<section class="tile sec-today" aria-label="Log da estação">
-		<DailyLog />
+	<!-- ── Diário ─────────────────────────────────────── -->
+	<section class="tile sec-journal" aria-label="Diário de bordo">
+		<JournalTile onOpen={() => onOpenSection('journal')} />
 	</section>
 
 	</div>
@@ -338,22 +315,15 @@
 	}
 
 
-	.ref {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		min-height: 44px;
-		padding: 8px 12px;
-		border-radius: var(--radius-field);
+	.mission-tag {
+		align-self: flex-start;
+		padding: 3px 8px;
+		border-radius: var(--radius-selector);
 		background: var(--c-missions-soft);
 		color: var(--c-missions-ink);
-		font-size: 14px;
-		text-decoration: none;
-		min-width: 0;
-	}
-	.ref-sub {
-		opacity: 0.75;
-		font-size: 13px;
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 1.2;
 	}
 
 	.more {
@@ -461,8 +431,7 @@
 		transition: width 0.3s ease;
 	}
 
-	button:focus-visible,
-	a:focus-visible {
+	button:focus-visible {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
 	}
