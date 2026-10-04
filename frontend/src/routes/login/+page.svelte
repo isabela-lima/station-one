@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { supabase } from '$lib/supabase';
-	import { Satellite, Loader2, Mail, CheckCircle2, RotateCcw } from 'lucide-svelte';
+	import { Satellite, Loader2, Mail, CheckCircle2, RotateCcw, KeyRound } from 'lucide-svelte';
 
-	/** 'login' | 'register' | 'confirm' */
-	let step = $state<'login' | 'register' | 'confirm'>('login');
+	type Step = 'login' | 'register' | 'confirm' | 'forgot' | 'reset';
+	let step = $state<Step>('login');
 
 	let email = $state('');
 	let password = $state('');
@@ -12,6 +13,73 @@
 	let loading = $state(false);
 	let resendLoading = $state(false);
 	let resendSuccess = $state(false);
+	let resetSent = $state(false);
+	let newPassword = $state('');
+	let confirmPassword = $state('');
+
+	// O link do email de recuperação volta para /login?reset=1 já com a sessão
+	// de recuperação no hash da URL (o supabase-js consome o hash sozinho).
+	onMount(async () => {
+		const url = new URL(window.location.href);
+		if (url.searchParams.get('reset') !== '1') return;
+
+		const hashParams = new URLSearchParams(url.hash.slice(1));
+		const { data } = await supabase.auth.getSession();
+		if (data.session) {
+			step = 'reset';
+		} else {
+			step = 'forgot';
+			errorMsg = hashParams.get('error_code') === 'otp_expired'
+				? 'Link expirado. Peça um novo abaixo.'
+				: 'Link inválido. Peça um novo abaixo.';
+		}
+		history.replaceState(null, '', '/login');
+	});
+
+	async function handleForgot() {
+		if (!email.trim()) return;
+		loading = true;
+		errorMsg = '';
+		try {
+			const { error } = await supabase.auth.resetPasswordForEmail(email, {
+				redirectTo: `${window.location.origin}/login?reset=1`
+			});
+			if (error) {
+				errorMsg = error.message;
+				return;
+			}
+			resetSent = true;
+		} catch {
+			errorMsg = 'Erro de conexão. Tente novamente.';
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleReset() {
+		errorMsg = '';
+		if (newPassword.length < 6) {
+			errorMsg = 'A senha precisa ter pelo menos 6 caracteres.';
+			return;
+		}
+		if (newPassword !== confirmPassword) {
+			errorMsg = 'As senhas não coincidem.';
+			return;
+		}
+		loading = true;
+		try {
+			const { error } = await supabase.auth.updateUser({ password: newPassword });
+			if (error) {
+				errorMsg = error.message;
+				return;
+			}
+			goto('/');
+		} catch {
+			errorMsg = 'Erro de conexão. Tente novamente.';
+		} finally {
+			loading = false;
+		}
+	}
 
 	async function handleSubmit() {
 		if (!email.trim() || !password.trim()) return;
@@ -74,6 +142,7 @@
 		step = 'login';
 		errorMsg = '';
 		resendSuccess = false;
+		resetSent = false;
 	}
 </script>
 
@@ -92,6 +161,8 @@
 			<div class="login-icon-ring">
 				{#if step === 'confirm'}
 					<Mail size={22} class="text-primary" />
+				{:else if step === 'forgot' || step === 'reset'}
+					<KeyRound size={22} class="text-primary" />
 				{:else}
 					<Satellite size={22} class="text-primary" />
 				{/if}
@@ -101,6 +172,8 @@
 				<p class="mt-1 text-xs uppercase tracking-widest text-primary/50">
 					{#if step === 'login'}Acesso ao sistema
 					{:else if step === 'register'}Novo operador
+					{:else if step === 'forgot'}Recuperar acesso
+					{:else if step === 'reset'}Nova senha
 					{:else}Confirme seu email
 					{/if}
 				</p>
@@ -159,6 +232,114 @@
 				</button>
 			</div>
 
+		<!-- ── Forgot Password ──────────────────────────── -->
+		{:else if step === 'forgot'}
+			{#if resetSent}
+				<div class="space-y-4">
+					<div class="login-info-box">
+						<div class="flex gap-3">
+							<Mail size={18} class="shrink-0 mt-0.5" style="color: #22d3ee" />
+							<div class="space-y-1">
+								<p class="text-sm font-semibold" style="color: #22d3ee">Verifique sua caixa de entrada</p>
+								<p class="text-xs text-base-content/60 leading-relaxed">
+									Se existir uma conta para <strong class="text-base-content/80">{email}</strong>,
+									você vai receber um link para definir uma nova senha.
+								</p>
+							</div>
+						</div>
+					</div>
+					<button
+						type="button"
+						class="w-full text-center text-xs text-base-content/40 hover:text-base-content/70 transition-colors py-1"
+						onclick={goBack}
+					>
+						← Voltar para o login
+					</button>
+				</div>
+			{:else}
+				<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); handleForgot(); }}>
+					<p class="text-xs text-base-content/50 leading-relaxed">
+						Informe o email da sua conta e enviaremos um link para redefinir a senha.
+					</p>
+					<div class="form-group">
+						<label class="login-label" for="forgot-email">Email</label>
+						<input
+							id="forgot-email"
+							type="email"
+							class="login-input"
+							placeholder="seu@email.com"
+							bind:value={email}
+							required
+							autocomplete="email"
+						/>
+					</div>
+
+					{#if errorMsg}
+						<div class="login-error">
+							<span class="text-xs">{errorMsg}</span>
+						</div>
+					{/if}
+
+					<button type="submit" class="login-btn" disabled={loading}>
+						{#if loading}
+							<Loader2 size={16} class="animate-spin" />
+						{/if}
+						Enviar link de recuperação
+					</button>
+					<button
+						type="button"
+						class="w-full text-center text-xs text-base-content/40 hover:text-base-content/70 transition-colors py-1"
+						onclick={goBack}
+					>
+						← Voltar para o login
+					</button>
+				</form>
+			{/if}
+
+		<!-- ── Reset Password (vindo do link do email) ───── -->
+		{:else if step === 'reset'}
+			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); handleReset(); }}>
+				<div class="form-group">
+					<label class="login-label" for="new-password">Nova senha</label>
+					<input
+						id="new-password"
+						type="password"
+						class="login-input"
+						placeholder="••••••••"
+						bind:value={newPassword}
+						required
+						minlength="6"
+						autocomplete="new-password"
+					/>
+				</div>
+				<div class="form-group">
+					<label class="login-label" for="confirm-password">Confirmar senha</label>
+					<input
+						id="confirm-password"
+						type="password"
+						class="login-input"
+						placeholder="••••••••"
+						bind:value={confirmPassword}
+						required
+						minlength="6"
+						autocomplete="new-password"
+					/>
+				</div>
+
+				{#if errorMsg}
+					<div class="login-error">
+						<span class="text-xs">{errorMsg}</span>
+					</div>
+				{/if}
+
+				<button type="submit" class="login-btn" disabled={loading}>
+					{#if loading}
+						<Loader2 size={16} class="animate-spin" />
+					{/if}
+					Salvar nova senha
+				</button>
+			</form>
+
 		<!-- ── Login / Register Form ────────────────────── -->
 		{:else}
 			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
@@ -176,7 +357,18 @@
 				</div>
 
 				<div class="form-group">
-					<label class="login-label" for="password">Senha</label>
+					<div class="flex items-baseline justify-between">
+						<label class="login-label" for="password">Senha</label>
+						{#if step === 'login'}
+							<button
+								type="button"
+								class="text-[10px] text-primary/60 hover:text-primary transition-colors"
+								onclick={() => { step = 'forgot'; errorMsg = ''; resetSent = false; }}
+							>
+								Esqueci minha senha
+							</button>
+						{/if}
+					</div>
 					<input
 						id="password"
 						type="password"
