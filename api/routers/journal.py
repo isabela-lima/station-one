@@ -188,7 +188,7 @@ async def set_checkin(user_id: CurrentUser, db: DB, day: date, body: CheckinUpda
     result = await db.execute(select(DailyLog).where(DailyLog.user_id == uid, DailyLog.date == day))
     log = result.scalar_one_or_none()
     if not log:
-        log = DailyLog(user_id=uid, date=day, content="")
+        log = DailyLog(user_id=uid, date=day)
         db.add(log)
     for field_name, value in body.model_dump(exclude_unset=True).items():
         setattr(log, field_name, value)

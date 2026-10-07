@@ -13,7 +13,7 @@ class Item(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    type: Mapped[str] = mapped_column(String(10), nullable=False)  # task (note/link: legado, migrados p/ o diário)
+    type: Mapped[str] = mapped_column(String(10), nullable=False)  # sempre "task" (notas/links agora são log_entries)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     title: Mapped[str | None] = mapped_column(Text)
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
