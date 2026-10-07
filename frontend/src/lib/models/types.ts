@@ -208,3 +208,71 @@ export interface SimulatorResponse {
 	recommendation: 'go' | 'caution' | 'avoid';
 	reason: string;
 }
+
+// ─── Configurações e assistente ──────────────────────────────────────────────
+
+export interface ModelOption {
+	id: string;
+	label: string;
+	description: string;
+	input_per_mtok: string;
+	output_per_mtok: string;
+}
+
+export interface UserSettings {
+	has_anthropic_key: boolean;
+	/** "…a1b2" — a chave em si nunca chega ao navegador */
+	anthropic_key_hint: string | null;
+	assistant_model: string;
+	models: ModelOption[];
+}
+
+export interface AssistantUsage {
+	month: string;
+	calls: number;
+	input_tokens: number;
+	output_tokens: number;
+	cost_usd: string;
+}
+
+export type ExpenseCategory =
+	| 'food'
+	| 'transport'
+	| 'health'
+	| 'personal'
+	| 'debt'
+	| 'savings'
+	| 'pharma'
+	| 'other';
+
+/** Ações propostas pelo assistente (o usuário revisa antes de aplicar) */
+export type AssistantAction =
+	| {
+			type: 'create_task';
+			content: string;
+			due_date: string | null;
+			goal_id: string | null;
+			goal_title?: string | null;
+			priority: boolean;
+	  }
+	| {
+			type: 'create_transaction';
+			kind: 'expense' | 'income';
+			amount: number;
+			category: ExpenseCategory;
+			description: string | null;
+			date: string | null;
+			wallet_id: string | null;
+			wallet_name?: string | null;
+	  }
+	| { type: 'add_journal_entry'; content: string }
+	| { type: 'set_checkin'; mood: number | null; energy: number | null };
+
+export interface CaptureResponse {
+	summary: string;
+	question: string | null;
+	actions: AssistantAction[];
+	wallets: { id: string; name: string }[];
+	model: string;
+	cost_usd: string;
+}

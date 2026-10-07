@@ -28,7 +28,9 @@
 	import { compareByUrgency } from '$lib/dates';
 	import AppHeader from '$lib/components/dashboard/AppHeader.svelte';
 	import CreateDialog from '$lib/components/dashboard/CreateDialog.svelte';
-	import { SECTIONS, sectionColor } from '$lib/components/dashboard/types';
+	import { HIDDEN_SECTIONS, SECTIONS, sectionColor } from '$lib/components/dashboard/types';
+	import CaptureDialog from '$lib/components/assistant/CaptureDialog.svelte';
+	import SettingsView from '$lib/components/settings/SettingsView.svelte';
 	import TodayView from '$lib/components/today/TodayView.svelte';
 	import FinanceDashboard from '$lib/components/finance/FinanceDashboard.svelte';
 
@@ -115,10 +117,49 @@
 		wishlist: 'wishlist'
 	};
 
+	// ─── Assistente ───────────────────────────────────
+	let captureOpen = $state(false);
+
+	const CREATED_LABELS: Record<string, [string, string]> = {
+		create_task: ['tarefa', 'tarefas'],
+		create_transaction: ['lançamento', 'lançamentos'],
+		add_journal_entry: ['entrada no diário', 'entradas no diário'],
+		set_checkin: ['check-in', 'check-ins']
+	};
+
+	/** Depois que o assistente grava, recarrega o que pode ter mudado */
+	async function handleCaptureApplied(created: Record<string, number>) {
+		const parts = Object.entries(created).map(([type, n]) => {
+			const [one, many] = CREATED_LABELS[type] ?? ['item', 'itens'];
+			return `${n} ${n === 1 ? one : many}`;
+		});
+		showToast(`Registrado: ${parts.join(', ')}.`);
+		try {
+			if (created.create_task) items = await api.items.list();
+			if (created.add_journal_entry || created.set_checkin) await loadJournalToday(true);
+			if (created.create_transaction) financeVersion += 1;
+		} catch {
+			/* o realtime / próximo reload corrige */
+		}
+	}
+
+	/** ⌘K / Ctrl+K abre o assistente de qualquer tela */
+	function onGlobalKeydown(e: KeyboardEvent) {
+		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+			e.preventDefault();
+			captureOpen = true;
+		}
+	}
+
+	/** Muda quando algo financeiro é criado, para os componentes de finanças recarregarem */
+	let financeVersion = $state(0);
+
 	/** Abre o formulário já no tipo da seção atual (Hoje → Operação) */
 	function openCreate() {
 		createKind =
-			activeSection === 'today' || activeSection === 'journal' ? 'operations' : activeSection;
+			activeSection === 'today' || activeSection === 'journal' || activeSection === 'settings'
+				? 'operations'
+				: activeSection;
 		selectedType = DEFAULT_TYPE[createKind];
 		createOpen = true;
 	}
@@ -140,7 +181,9 @@
 	);
 	const goalTitles = $derived(new Map(goals.map((g) => [g.id, g.title])));
 	const topStreak = $derived(habits.reduce((max, h) => Math.max(max, h.streak), 0));
-	const currentSection = $derived(SECTIONS.find((s) => s.id === activeSection)!);
+	const currentSection = $derived(
+		[...SECTIONS, ...HIDDEN_SECTIONS].find((s) => s.id === activeSection) ?? SECTIONS[0]
+	);
 	const initials = $derived(
 		userName
 			.split(' ')
@@ -567,6 +610,7 @@
 		{userName}
 		{initials}
 		onCreate={openCreate}
+		onAssistant={() => (captureOpen = true)}
 		onLogout={handleLogout}
 	/>
 
@@ -606,6 +650,7 @@
 			onToggleItem={handleToggleItem}
 			onToggleHabit={handleToggleHabit}
 			onOpenSection={(sec) => (activeSection = sec)}
+			{financeVersion}
 		/>
 	{:else}
 		<!-- Página de seção -->
@@ -744,7 +789,9 @@
 			{:else if activeSection === 'journal'}
 				<JournalView />
 			{:else if activeSection === 'finance'}
-				<FinanceDashboard />
+				{#key financeVersion}<FinanceDashboard />{/key}
+			{:else if activeSection === 'settings'}
+				<SettingsView />
 			{/if}
 		</section>
 	{/if}
@@ -757,6 +804,15 @@
 	{goals}
 	onSubmit={handleFormSubmit}
 />
+
+<CaptureDialog
+	bind:open={captureOpen}
+	{goals}
+	onApplied={handleCaptureApplied}
+	onOpenSettings={() => (activeSection = 'settings')}
+/>
+
+<svelte:window onkeydown={onGlobalKeydown} />
 
 <Toast />
 

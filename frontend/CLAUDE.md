@@ -47,6 +47,12 @@ Toda chamada ao FastAPI passa o JWT do Supabase no header `Authorization: Bearer
 5. Ações de clique são otimistas: atualize o estado local primeiro, chame a API e, se falhar, desfaça só o item afetado (veja `handleToggleItem`)
 6. `onDestroy` limpa todas as subscriptions do Supabase
 
+### Assistente (IA)
+
+- Cada usuário cola a própria chave da Anthropic em **Configurações** (`SettingsView`); a API valida com `models.list`, guarda cifrada (`api/secrets_box.py`, Fernet com `APP_ENCRYPTION_KEY` ou o arquivo gerado `api/.app_key`) e só devolve o final (`…a1b2`). O modelo também é escolha do usuário (`api/assistant_llm.py` → `MODELS`); padrão Haiku 4.5.
+- Captura (`CaptureDialog`, botão ✨ ou ⌘K): `POST /assistant/capture` só **propõe** ações (structured outputs); o usuário revisa/edita e `POST /assistant/apply` grava tudo numa transação. Toda chamada registra tokens e custo em `assistant_usage`.
+- Nunca grave nada direto a partir da resposta do modelo: sempre passe pela revisão do usuário e pela validação de `ApplyRequest`.
+
 ### Tarefas, missões e diário
 
 - **Tarefa** = `Item` com `type: 'task'`. Pode pertencer a uma **missão** (`goal_id`); o progresso da missão é tarefas concluídas / total. Os antigos "marcos" viraram tarefas da missão.

@@ -1,4 +1,8 @@
 import type {
+	AssistantAction,
+	AssistantUsage,
+	CaptureResponse,
+	UserSettings,
 	Budget,
 	Checkin,
 	DaySummary,
@@ -20,6 +24,24 @@ import type {
 } from './models/types';
 import { getAuthToken } from './supabase';
 
+/** Erro da API com o status HTTP (ex.: 409 = assistente sem chave configurada) */
+export class ApiError extends Error {
+	constructor(
+		message: string,
+		readonly status: number
+	) {
+		super(message);
+		this.name = 'ApiError';
+	}
+}
+
+/** `detail` do FastAPI: texto, ou lista de erros de validação (422) */
+function errorMessage(detail: unknown, fallback: string): string {
+	if (typeof detail === 'string') return detail;
+	if (Array.isArray(detail) && detail[0]?.msg) return String(detail[0].msg);
+	return fallback;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const token = await getAuthToken();
 	// Mesma origem: o servidor do frontend repassa /api para o FastAPI (hooks.server.ts)
@@ -35,7 +57,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	});
 	if (!res.ok) {
 		const err = await res.json().catch(() => ({ detail: res.statusText }));
-		throw new Error(err.detail ?? `HTTP ${res.status}`);
+		throw new ApiError(errorMessage(err.detail, `HTTP ${res.status}`), res.status);
 	}
 	if (res.status === 204) return undefined as T;
 	return res.json();
@@ -175,4 +197,37 @@ export const finance = {
 			request<HealthLog>('/finance/health-logs', { method: 'POST', body: JSON.stringify(body) }),
 		roi: () => request<PersonalROI>('/finance/health-logs/roi')
 	}
+};
+
+// ─── Configurações ──────────────────────────────────────
+
+export const settings = {
+	get: () => request<UserSettings>('/settings'),
+	setAnthropicKey: (apiKey: string) =>
+		request<UserSettings>('/settings/anthropic-key', {
+			method: 'PUT',
+			body: JSON.stringify({ api_key: apiKey })
+		}),
+	deleteAnthropicKey: () => request<UserSettings>('/settings/anthropic-key', { method: 'DELETE' }),
+	setModel: (model: string) =>
+		request<UserSettings>('/settings', {
+			method: 'PATCH',
+			body: JSON.stringify({ assistant_model: model })
+		}),
+	usage: () => request<AssistantUsage>('/settings/usage')
+};
+
+// ─── Assistente ─────────────────────────────────────────
+
+export const assistant = {
+	capture: (text: string) =>
+		request<CaptureResponse>('/assistant/capture', {
+			method: 'POST',
+			body: JSON.stringify({ text })
+		}),
+	apply: (actions: AssistantAction[]) =>
+		request<{ created: Record<string, number> }>('/assistant/apply', {
+			method: 'POST',
+			body: JSON.stringify({ actions })
+		})
 };

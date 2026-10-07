@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, LogOut, Check } from 'lucide-svelte';
+	import { Plus, LogOut, Check, Sparkles, Settings } from 'lucide-svelte';
 	import { THEMES, theme, setTheme } from '$lib/theme.svelte';
 	import { SECTIONS, type Section } from './types';
 
@@ -8,12 +8,14 @@
 		userName,
 		initials,
 		onCreate,
+		onAssistant,
 		onLogout
 	}: {
 		activeSection: Section;
 		userName: string;
 		initials: string;
 		onCreate: () => void;
+		onAssistant: () => void;
 		onLogout: () => void;
 	} = $props();
 
@@ -43,6 +45,15 @@
 	<!-- ml-auto: quando o cabeçalho quebra de linha (celular), os botões ficam à direita
 	     e o menu do avatar, ancorado na direita, não sai da tela -->
 	<div class="ml-auto flex items-center gap-2">
+		<button
+			type="button"
+			class="assistant-btn"
+			aria-label="Registrar com o assistente (⌘K)"
+			title="Registrar com o assistente (⌘K)"
+			onclick={onAssistant}
+		>
+			<Sparkles size={18} />
+		</button>
 		<button type="button" class="new-btn" onclick={onCreate}>
 			<Plus size={18} strokeWidth={2.4} />
 			Novo
@@ -71,6 +82,17 @@
 					</button>
 				{/each}
 				<div class="my-1 h-px bg-base-300"></div>
+				<button
+					type="button"
+					class="menu-item"
+					onclick={() => {
+						activeSection = 'settings';
+						closeMenu();
+					}}
+				>
+					<Settings size={16} />
+					<span class="text-sm">Configurações</span>
+				</button>
 				<button type="button" class="menu-item text-error" onclick={onLogout}>
 					<LogOut size={16} />
 					<span class="text-sm">Sair</span>
@@ -134,6 +156,25 @@
 	}
 	.new-btn:hover {
 		filter: brightness(1.08);
+	}
+
+	.assistant-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-primary) 16%, transparent);
+		color: var(--color-primary);
+		cursor: pointer;
+	}
+	.assistant-btn:hover {
+		background: color-mix(in oklab, var(--color-primary) 26%, transparent);
+	}
+	.assistant-btn:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 
 	.avatar-btn {
