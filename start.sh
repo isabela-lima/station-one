@@ -74,8 +74,9 @@ pids+=($!)
 	API_INTERNAL_URL="http://127.0.0.1:$API_PORT" exec node build) &
 pids+=($!)
 
-for _ in $(seq 1 40); do
-	curl -s -o /dev/null "http://$WEB_HOST:$WEB_PORT/api/health" && break
+for _ in $(seq 1 60); do
+	# -f: um 502 (API ainda subindo) conta como falha e continua esperando
+	curl -sf -o /dev/null "http://$WEB_HOST:$WEB_PORT/api/health" && break
 	sleep 0.5
 done
 
