@@ -40,7 +40,9 @@
 		{/each}
 	</nav>
 
-	<div class="flex items-center gap-2">
+	<!-- ml-auto: quando o cabeçalho quebra de linha (celular), os botões ficam à direita
+	     e o menu do avatar, ancorado na direita, não sai da tela -->
+	<div class="ml-auto flex items-center gap-2">
 		<button type="button" class="new-btn" onclick={onCreate}>
 			<Plus size={18} strokeWidth={2.4} />
 			Novo
@@ -158,6 +160,7 @@
 		top: calc(100% + 8px);
 		z-index: 50;
 		width: 240px;
+		max-width: calc(100vw - 32px);
 		padding: 6px;
 		border-radius: var(--radius-box);
 		background: var(--color-base-200);
