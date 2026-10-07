@@ -261,6 +261,9 @@ body {
 	color: var(--color-base-content);
 	font-family: var(--font-body);
 	min-height: 100vh;
+	/* Instalado no iPhone (tela cheia), o conteúdo não pode ficar sob o notch nem a barra inferior */
+	padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+		env(safe-area-inset-left);
 }
 
 .font-display {

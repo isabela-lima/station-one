@@ -13,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 pnpm dev          # servidor de desenvolvimento (localhost:5173)
+# Para usar de verdade (Mac + iPhone pelo Tailscale): ./start.sh na raiz do repo
 pnpm build        # build de produção
 pnpm preview      # preview do build
 pnpm check        # type-check com svelte-check
@@ -24,7 +25,7 @@ pnpm format       # formatar código
 ./bin/pocketbase serve  # NÃO USADO — backend é FastAPI + Supabase
 ```
 
-O backend FastAPI deve estar rodando em `http://localhost:8000` (variável `PUBLIC_API_URL`).
+O backend FastAPI deve estar rodando em `http://127.0.0.1:8000`. O navegador nunca fala com ele direto: chama `/api/...` e o `src/hooks.server.ts` repassa (variável `API_INTERNAL_URL`, opcional). Assim há um único endereço — o do Tailscale no iPhone, ou `localhost:5173` em dev.
 
 ## Arquitetura
 

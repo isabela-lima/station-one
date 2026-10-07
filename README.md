@@ -55,7 +55,7 @@ api/supabase/migrations/20261007010000_task_due_date_as_date.sql
 
 As migrações em `api/supabase/migrations/` são idempotentes (podem rodar de novo sem efeito).
 
-Em **Authentication → URL Configuration → Redirect URLs**, adicione `http://localhost:5173/login?reset=1` (e o equivalente em produção) para o fluxo de "esqueci minha senha".
+Em **Authentication → URL Configuration → Redirect URLs**, adicione `http://localhost:5173/login?reset=1` e `https://<nome-do-mac>.<rede>.ts.net/login?reset=1` para o fluxo de "esqueci minha senha".
 
 ### 2. Variáveis de ambiente
 
@@ -76,13 +76,43 @@ make install
 
 ## Como rodar
 
+### No dia a dia (no seu Mac, acessando pelo iPhone)
+
+```bash
+./start.sh            # Ctrl+C desliga
+./start.sh --rebuild  # força recompilar o frontend
+```
+
+Sobe a API e o app (compila o frontend se o código mudou) e publica na sua rede [Tailscale](https://tailscale.com):
+
+- `https://<nome-do-mac>.<rede>.ts.net` — com HTTPS: necessário para o clima e para instalar como app
+- `http://<nome-do-mac>:4100` — endereço curto, sem HTTPS
+
+Os dois processos escutam só em `127.0.0.1`; quem expõe o app é o `tailscale serve`, então ele aparece **só** para os seus aparelhos no Tailscale, nunca na rede Wi-Fi. Pré-requisitos (uma vez): Tailscale rodando com MagicDNS, e o *Serve* habilitado na rede — na primeira execução, se não estiver, o script mostra o link para habilitar.
+
+No iPhone: abra o endereço HTTPS no Safari → **Compartilhar → Adicionar à Tela de Início**.
+
+Opcional — rodar como serviço que liga sozinho no login (`launchd`):
+
+```bash
+make deploy          # compila e instala/atualiza (rode de novo após cada atualização)
+make tailscale-on    # publica no Tailscale
+make service-status  # está de pé?
+make logs            # acompanha os logs
+make service-stop    # remove o serviço
+```
+
+### Desenvolvendo (hot reload)
+
 ```bash
 make dev        # frontend + API juntos
 make frontend   # só o frontend (http://localhost:5173)
 make api        # só a API (http://localhost:8000)
 ```
 
-Docs da API disponíveis em `http://localhost:8000/docs` (apenas em `ENVIRONMENT=development`).
+O navegador sempre chama `/api/...` no mesmo endereço do app; o servidor do frontend (`src/hooks.server.ts`) repassa para o FastAPI. Docs da API em `http://localhost:8000/docs` (apenas em `ENVIRONMENT=development`).
+
+As portas de dev (5173/8000) e as do `./start.sh` (4100/8100) são diferentes, então dá para rodar os dois ao mesmo tempo.
 
 ---
 

@@ -575,8 +575,8 @@
 		<section class="flex flex-wrap items-end justify-between gap-4 px-1">
 			<div class="flex flex-col gap-2">
 				<p class="text-sm font-semibold text-base-content/70">
-					{currentDate}{#if weather}
-						· {weather.emoji} {weather.temp}°C{/if}
+					<!-- Texto montado numa expressão só: espaços soltos aqui eram engolidos ao formatar -->
+					{currentDate}{weather ? ` · ${weather.emoji} ${weather.temp}°C` : ''}
 				</p>
 				<h1 class="font-display hero-title">{greeting}, {firstName}.</h1>
 			</div>

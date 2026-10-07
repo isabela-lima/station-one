@@ -60,7 +60,6 @@ jobs:
       # Valores públicos fictícios só para o build ($env/static/public)
       PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
       PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
-      PUBLIC_API_URL: http://localhost:8000
     steps:
       - uses: actions/checkout@v7
 

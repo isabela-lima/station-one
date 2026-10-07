@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Station One</title>
+  <rect width="512" height="512" rx="112" fill="#0b0d14"/>
+  <g transform="rotate(-25 256 256)">
+    <ellipse cx="256" cy="256" rx="190" ry="78" fill="none" stroke="#22d3ee" stroke-width="26" stroke-opacity="0.9"/>
+  </g>
+  <circle cx="256" cy="256" r="74" fill="#22d3ee"/>
+  <circle cx="256" cy="256" r="74" fill="url(#shade)"/>
+  <g transform="rotate(-25 256 256)">
+    <path d="M 66 256 A 190 78 0 0 0 446 256" fill="none" stroke="#22d3ee" stroke-width="26"/>
+  </g>
+  <circle cx="404" cy="168" r="22" fill="#8b5cf6"/>
+  <defs>
+    <radialGradient id="shade" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#0b0d14" stop-opacity="0.35"/>
+    </radialGradient>
+  </defs>
+</svg>

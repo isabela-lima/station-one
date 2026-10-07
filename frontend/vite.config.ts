@@ -13,13 +13,15 @@ export default defineConfig({
 				name: 'Station One',
 				short_name: 'Station One',
 				description: 'Seu centro de atenção pessoal',
-				theme_color: '#000000',
-				background_color: '#000000',
+				// Cores do tema padrão (Órbita); a barra de status do iOS usa o meta em app.html
+				theme_color: '#0b0d14',
+				background_color: '#0b0d14',
 				display: 'standalone',
 				start_url: '/',
 				icons: [
-					{ src: '/icons/96.png', sizes: '96x96', type: 'image/png' },
-					{ src: '/icons/128.png', sizes: '128x128', type: 'image/png' }
+					{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+					{ src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+					{ src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
 				]
 			}
 		})
