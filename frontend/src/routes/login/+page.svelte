@@ -21,7 +21,13 @@
 	// de recuperação no hash da URL (o supabase-js consome o hash sozinho).
 	onMount(async () => {
 		const url = new URL(window.location.href);
-		if (url.searchParams.get('reset') !== '1') return;
+		if (url.searchParams.get('reset') !== '1') {
+			// Já logada (sessão salva no navegador): vai direto para o app em vez de
+			// mostrar o formulário, que dava a impressão de ter "esquecido" o login
+			const { data } = await supabase.auth.getSession();
+			if (data.session) goto('/', { replaceState: true });
+			return;
+		}
 
 		const hashParams = new URLSearchParams(url.hash.slice(1));
 		const { data } = await supabase.auth.getSession();
