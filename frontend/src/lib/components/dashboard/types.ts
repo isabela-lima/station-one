@@ -31,7 +31,7 @@ export function sectionColor(id: Section): string {
 export type FormType = 'task' | 'goal' | 'wishlist' | 'transaction' | 'wallet' | 'habit';
 
 export type FormPayload =
-	| { kind: 'task'; content: string; goal_id: string | null }
+	| { kind: 'task'; content: string; goal_id: string | null; due_date: string | null }
 	| { kind: 'goal'; title: string }
 	| {
 			kind: 'wishlist';

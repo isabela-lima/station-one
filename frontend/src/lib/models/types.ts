@@ -16,6 +16,7 @@ export interface Item {
 	title?: string | null;
 	completed: boolean;
 	priority: boolean;
+	/** Dia do prazo, "YYYY-MM-DD" (sem hora) — use os helpers de $lib/dates */
 	due_date?: string | null;
 	/** Missão à qual a tarefa pertence (antes: "marco") */
 	goal_id: string | null;

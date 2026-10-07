@@ -80,6 +80,9 @@ jobs:
       - name: Tipos (svelte-check)
         run: pnpm check
 
+      - name: Testes (node --test)
+        run: pnpm test
+
       - name: Formatação (Prettier em src/)
         run: pnpm exec prettier --check src
 

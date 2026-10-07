@@ -17,6 +17,7 @@ pnpm build        # build de produção
 pnpm preview      # preview do build
 pnpm check        # type-check com svelte-check
 pnpm check:watch  # type-check em modo watch
+pnpm test         # testes unitários (node --test, arquivos src/lib/*.test.ts)
 pnpm lint         # verificar formatação (Prettier)
 pnpm format       # formatar código
 
@@ -49,6 +50,7 @@ Toda chamada ao FastAPI passa o JWT do Supabase no header `Authorization: Bearer
 
 - **Tarefa** = `Item` com `type: 'task'`. Pode pertencer a uma **missão** (`goal_id`); o progresso da missão é tarefas concluídas / total. Os antigos "marcos" viraram tarefas da missão.
 - `completed_at` é preenchido pela API ao concluir e alimenta o resumo do dia.
+- `due_date` é um **dia** (`"YYYY-MM-DD"`, coluna `date`), não um instante. Use sempre os helpers de `src/lib/dates.ts` — `new Date("2026-10-10")` é meia-noite UTC e vira o dia anterior no Brasil. Listas de tarefas ordenam com `compareByUrgency` (atrasadas, hoje, próximas, sem prazo).
 - **Diário** (`/journal` na API): entradas curtas com hora (`log_entries`; um link no texto vira `url`), check-in de humor/energia 1–5 (`daily_logs`) e um resumo montado pela API com tarefas concluídas, protocolos feitos e gastos do dia. Notas e links que ficavam em Operações agora são entradas do diário.
 
 ### Formulário unificado

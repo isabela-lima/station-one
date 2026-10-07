@@ -51,7 +51,12 @@ export const items = {
 		if (params?.completed !== undefined) q.set('completed', String(params.completed));
 		return request<Item[]>(`/items?${q}`);
 	},
-	create: (body: { content: string; goal_id?: string | null; priority?: boolean }) =>
+	create: (body: {
+		content: string;
+		goal_id?: string | null;
+		due_date?: string | null;
+		priority?: boolean;
+	}) =>
 		request<Item>('/items', { method: 'POST', body: JSON.stringify({ type: 'task', ...body }) }),
 	update: (
 		id: string,

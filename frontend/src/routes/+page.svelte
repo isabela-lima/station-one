@@ -25,6 +25,7 @@
 	import Toast from '$lib/components/Toast.svelte';
 	import JournalView from '$lib/components/journal/JournalView.svelte';
 	import { loadJournalToday } from '$lib/journal.svelte';
+	import { compareByUrgency } from '$lib/dates';
 	import AppHeader from '$lib/components/dashboard/AppHeader.svelte';
 	import CreateDialog from '$lib/components/dashboard/CreateDialog.svelte';
 	import { SECTIONS, sectionColor } from '$lib/components/dashboard/types';
@@ -129,6 +130,14 @@
 	const completedTasks = $derived(items.filter((i) => i.type === 'task' && i.completed));
 	/** Nome para a saudação: só o primeiro nome do perfil; sem nome no perfil, "Comandante" */
 	const firstName = $derived(profileName?.trim().split(/\s+/)[0] || 'Comandante');
+	/** Operações: pendentes por urgência (atrasadas, hoje, próximas, sem prazo); concluídas no fim */
+	const sortedTasks = $derived(
+		[...items].sort((a, b) =>
+			a.completed !== b.completed
+				? Number(a.completed) - Number(b.completed)
+				: compareByUrgency(a, b)
+		)
+	);
 	const goalTitles = $derived(new Map(goals.map((g) => [g.id, g.title])));
 	const topStreak = $derived(habits.reduce((max, h) => Math.max(max, h.streak), 0));
 	const currentSection = $derived(SECTIONS.find((s) => s.id === activeSection)!);
@@ -213,6 +222,20 @@
 			showToast('Erro ao alterar prioridade.', 'error');
 		} finally {
 			setPending(id, false);
+		}
+	}
+
+	async function handleSetDue(id: string, due: string | null) {
+		const item = items.find((i) => i.id === id);
+		if (!item || item.due_date === due) return;
+		const previous = item.due_date ?? null;
+		items = items.map((i) => (i.id === id ? { ...i, due_date: due } : i));
+		try {
+			const updated = await api.items.update(id, { due_date: due });
+			items = items.map((i) => (i.id === id ? updated : i));
+		} catch {
+			items = items.map((i) => (i.id === id ? { ...i, due_date: previous } : i));
+			showToast('Erro ao alterar prazo.', 'error');
 		}
 	}
 
@@ -353,7 +376,8 @@
 				case 'task': {
 					const created = await api.items.create({
 						content: payload.content,
-						goal_id: payload.goal_id
+						goal_id: payload.goal_id,
+						due_date: payload.due_date
 					});
 					items = [created, ...items.filter((i) => i.id !== created.id)];
 					showToast('Operação criada!');
@@ -612,7 +636,7 @@
 					</div>
 				{:else}
 					<div class="space-y-0.5">
-						{#each items as item, i (item.id)}
+						{#each sortedTasks as item, i (item.id)}
 							<ItemCard
 								{item}
 								index={i}
@@ -622,6 +646,7 @@
 								onToggle={handleToggleItem}
 								onDelete={handleDeleteItem}
 								onTogglePriority={handleTogglePriority}
+								onSetDue={handleSetDue}
 							/>
 						{/each}
 						{#if items.length === 0}
@@ -652,6 +677,7 @@
 								onDeleteTask={handleDeleteItem}
 								onTogglePriority={handleTogglePriority}
 								onAddTask={handleAddTaskToGoal}
+								onSetDue={handleSetDue}
 								onDeleteGoal={handleDeleteGoal}
 							/>
 						{/each}

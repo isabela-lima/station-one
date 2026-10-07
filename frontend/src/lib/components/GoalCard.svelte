@@ -9,6 +9,7 @@
 		onToggleTask,
 		onDeleteTask,
 		onTogglePriority,
+		onSetDue,
 		onAddTask,
 		onDeleteGoal,
 		pendingIds = new Set<string>(),
@@ -20,6 +21,7 @@
 		onToggleTask: (id: string) => void;
 		onDeleteTask: (id: string) => void;
 		onTogglePriority: (id: string) => void;
+		onSetDue?: (id: string, due: string | null) => void;
 		onAddTask: (goalId: string, content: string) => Promise<void>;
 		onDeleteGoal: (goalId: string) => void;
 		pendingIds?: Set<string>;
@@ -95,6 +97,7 @@
 					onToggle={onToggleTask}
 					onDelete={onDeleteTask}
 					{onTogglePriority}
+					{onSetDue}
 				/>
 			{/each}
 		</div>
