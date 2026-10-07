@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     # Imprime cada SQL com os valores (diário, gastos…). Só para depurar: liga com SQL_ECHO=true
     sql_echo: bool = False
     cors_origins: str = "http://localhost:5173"
+    # Chave Fernet que cifra as chaves da Anthropic dos usuários. Opcional: sem ela,
+    # o servidor gera e guarda uma em api/.app_key (ver secrets_box.py).
+    app_encryption_key: str = ""
+    # Modelo do assistente quando o usuário não escolheu outro
+    assistant_default_model: str = "claude-haiku-4-5"
 
     @property
     def cors_origins_list(self) -> list[str]:

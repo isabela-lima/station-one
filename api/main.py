@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -12,12 +13,24 @@ from routers.goals import goals_router
 from routers.wishlist import router as wishlist_router
 from routers.journal import router as journal_router
 from routers.habits import router as habits_router
+from routers.settings import router as settings_router
+from routers.assistant import router as assistant_router
 from routers.finance.wallets import router as wallets_router
 from routers.finance.transactions import router as transactions_router, overview_router
 from routers.finance.debts import router as debts_router
 from routers.finance.simulator import router as simulator_router
 from routers.finance.health_logs import router as health_logs_router
 from routers.finance.budgets import router as budgets_router
+
+# Logs do próprio app (ex.: tempos do assistente) no terminal, independentes do
+# nível do uvicorn. SQL continua de fora (ver SQL_ECHO em config.py).
+_handler = logging.StreamHandler()
+_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s: %(message)s", "%H:%M:%S"))
+_app_log = logging.getLogger("station_one")
+_app_log.setLevel(logging.INFO)
+_app_log.addHandler(_handler)
+_app_log.propagate = False
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -59,6 +72,8 @@ app.include_router(goals_router)
 app.include_router(wishlist_router)
 app.include_router(journal_router)
 app.include_router(habits_router)
+app.include_router(settings_router)
+app.include_router(assistant_router)
 
 # ─── Routers: Financial Core ──────────────────────────────
 app.include_router(wallets_router)

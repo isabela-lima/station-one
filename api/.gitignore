@@ -8,3 +8,6 @@ dist/
 build/
 .pytest_cache/
 poetry.lock     # opcional: commitar se quiser builds reproduzíveis
+
+# Segredo gerado pelo servidor para cifrar as chaves de API dos usuários
+.app_key
