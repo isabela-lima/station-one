@@ -1,6 +1,15 @@
 // ─── Shared Dashboard Types ───────────────────────────────────────────────────
 
-import { Sun, Zap, Target, FlameKindling, LineChart, ShoppingBag, BookOpen } from 'lucide-svelte';
+import {
+	Sun,
+	Zap,
+	Target,
+	FlameKindling,
+	LineChart,
+	ShoppingBag,
+	BookOpen,
+	Settings
+} from 'lucide-svelte';
 
 export type Section =
 	| 'today'
@@ -9,10 +18,11 @@ export type Section =
 	| 'journal'
 	| 'wishlist'
 	| 'finance'
-	| 'protocols';
+	| 'protocols'
+	| 'settings';
 
 /** Seções criadas pelo botão "Novo" (o diário tem campo próprio na página) */
-export type CreatableSection = Exclude<Section, 'today' | 'journal'>;
+export type CreatableSection = Exclude<Section, 'today' | 'journal' | 'settings'>;
 
 /** Ordem da navegação; `color` mapeia para a classe .sec-<color> (tokens do tema) */
 export const SECTIONS = [
@@ -25,8 +35,13 @@ export const SECTIONS = [
 	{ id: 'wishlist', label: 'Wishlist', color: 'wishlist', Icon: ShoppingBag }
 ] as const satisfies readonly { id: Section; label: string; color: string; Icon: unknown }[];
 
+/** Páginas que não aparecem nos chips (abertas pelo menu do avatar) */
+export const HIDDEN_SECTIONS = [
+	{ id: 'settings', label: 'Configurações', color: 'today', Icon: Settings }
+] as const satisfies readonly { id: Section; label: string; color: string; Icon: unknown }[];
+
 export function sectionColor(id: Section): string {
-	return SECTIONS.find((s) => s.id === id)?.color ?? 'today';
+	return [...SECTIONS, ...HIDDEN_SECTIONS].find((s) => s.id === id)?.color ?? 'today';
 }
 export type FormType = 'task' | 'goal' | 'wishlist' | 'transaction' | 'wallet' | 'habit';
 

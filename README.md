@@ -51,6 +51,7 @@ api/supabase/migrations/20261004000000_enable_realtime.sql
 api/supabase/migrations/20261004010000_tasks_missions_journal.sql
 api/supabase/migrations/20261007000000_cleanup_legacy_data.sql
 api/supabase/migrations/20261007010000_task_due_date_as_date.sql
+api/supabase/migrations/20261007020000_assistant_settings_usage.sql
 ```
 
 As migrações em `api/supabase/migrations/` são idempotentes (podem rodar de novo sem efeito).
@@ -124,6 +125,7 @@ As portas de dev (5173/8000) e as do `./start.sh` (4100/8100) são diferentes, e
 | **Operações** | Tarefas, cada uma opcionalmente ligada a uma missão. Foco (⭐) e limpeza das concluídas. |
 | **Missões** | Projetos que agrupam tarefas, com barra de progresso. |
 | **Diário** | Entradas com hora, humor/energia do dia e resumo automático (tarefas, protocolos, gastos), com histórico. |
+| **Assistente** (✨ ou ⌘K) | Escreva em português (“pagar a fatura sexta, gastei 45 no mercado”) e ele propõe tarefas, gastos, entradas no diário e check-in; nada é gravado antes de você confirmar. Usa a **sua** chave da Anthropic, configurada em Configurações. |
 | **Protocolos** | Hábitos diários com streak 🔥 |
 | **Wishlist** | Lista de desejos com preço atual vs. meta. |
 | **Finanças** | Carteiras, transações, orçamentos e dívidas. |

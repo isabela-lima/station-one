@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { Check, ArrowRight, Star } from 'lucide-svelte';
 	import * as api from '$lib/api';
 	import type { FinanceOverview, Goal, Habit, Item, Section } from '$lib';
@@ -14,7 +13,8 @@
 		pendingIds,
 		onToggleItem,
 		onToggleHabit,
-		onOpenSection
+		onOpenSection,
+		financeVersion = 0
 	}: {
 		items: Item[];
 		habits: Habit[];
@@ -24,6 +24,8 @@
 		onToggleItem: (id: string) => void;
 		onToggleHabit: (id: string) => void;
 		onOpenSection: (s: Section) => void;
+		/** Muda quando algo financeiro foi criado em outro lugar (ex.: assistente) */
+		financeVersion?: number;
 	} = $props();
 
 	// ─── Operações ────────────────────────────────────
@@ -63,12 +65,18 @@
 	let finance = $state<FinanceOverview | null>(null);
 	let financeFailed = $state(false);
 
-	onMount(async () => {
-		try {
-			finance = await api.finance.overview();
-		} catch {
-			financeFailed = true;
-		}
+	// Recarrega quando financeVersion muda (lançamento feito pelo assistente)
+	$effect(() => {
+		void financeVersion;
+		api.finance
+			.overview()
+			.then((data) => {
+				finance = data;
+				financeFailed = false;
+			})
+			.catch(() => {
+				financeFailed = true;
+			});
 	});
 
 	function brl(value: number, currency = 'BRL') {
