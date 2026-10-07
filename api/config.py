@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""     # Legacy HS256 secret — empty for RS256/JWKS projects
     database_url: str
     environment: str = "development"
+    # Imprime cada SQL com os valores (diário, gastos…). Só para depurar: liga com SQL_ECHO=true
+    sql_echo: bool = False
     cors_origins: str = "http://localhost:5173"
 
     @property

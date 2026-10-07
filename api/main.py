@@ -1,7 +1,12 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
+from database import engine
 from routers.items import router as items_router
 from routers.goals import goals_router
 from routers.wishlist import router as wishlist_router
@@ -14,7 +19,24 @@ from routers.finance.simulator import router as simulator_router
 from routers.finance.health_logs import router as health_logs_router
 from routers.finance.budgets import router as budgets_router
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Abre conexões com o banco já na subida: a primeira requisição do dia não
+    # paga os ~2,5 s de abrir conexão TLS até o pooler da Supabase.
+    try:
+        await asyncio.gather(*(_warm_connection() for _ in range(2)))
+    except Exception:  # sem banco na subida (ex.: testes/CI): segue, conecta sob demanda
+        pass
+    yield
+
+
+async def _warm_connection() -> None:
+    async with engine.connect() as conn:
+        await conn.execute(text("select 1"))
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="Station One API",
     description="Backend unificado para o Station One — operações, missões, diário, wishlist e financial core.",
     version="1.0.0",
