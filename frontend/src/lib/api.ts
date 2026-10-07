@@ -1,4 +1,3 @@
-import { PUBLIC_API_URL } from '$env/static/public';
 import type {
 	Budget,
 	Checkin,
@@ -23,7 +22,8 @@ import { getAuthToken } from './supabase';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const token = await getAuthToken();
-	const res = await fetch(`${PUBLIC_API_URL}${path}`, {
+	// Mesma origem: o servidor do frontend repassa /api para o FastAPI (hooks.server.ts)
+	const res = await fetch(`/api${path}`, {
 		...options,
 		headers: {
 			'Content-Type': 'application/json',
