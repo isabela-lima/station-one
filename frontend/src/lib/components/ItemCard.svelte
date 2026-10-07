@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Item } from '$lib';
-	import { Check, Trash2, Star } from 'lucide-svelte';
+	import { Check, Trash2, Star, CalendarDays } from 'lucide-svelte';
+	import { dueInfo } from '$lib/dates';
 
 	let {
 		item,
@@ -9,6 +10,7 @@
 		onTogglePriority,
 		missionTitle = null,
 		onOpenMission,
+		onSetDue,
 		pending = false,
 		index = 0
 	}: {
@@ -19,9 +21,21 @@
 		/** Nome da missão da tarefa, quando houver (mostrado como etiqueta) */
 		missionTitle?: string | null;
 		onOpenMission?: () => void;
+		/** Define/limpa o prazo ("YYYY-MM-DD" ou null) */
+		onSetDue?: (id: string, due: string | null) => void;
 		pending?: boolean;
 		index?: number;
 	} = $props();
+
+	const due = $derived(item.due_date && !item.completed ? dueInfo(item.due_date) : null);
+	let picker = $state<HTMLInputElement | null>(null);
+
+	function openPicker() {
+		if (!picker) return;
+		// showPicker abre o calendário nativo; navegadores antigos caem no foco
+		if (typeof picker.showPicker === 'function') picker.showPicker();
+		else picker.focus();
+	}
 </script>
 
 <div
@@ -42,16 +56,55 @@
 
 	<div class="flex min-w-0 flex-1 flex-col gap-1">
 		<span class="text break-words">{item.content}</span>
-		{#if missionTitle}
-			{#if onOpenMission}
-				<button type="button" class="mission-tag" onclick={onOpenMission}>{missionTitle}</button>
-			{:else}
-				<span class="mission-tag">{missionTitle}</span>
-			{/if}
+		{#if due || missionTitle}
+			<span class="meta">
+				{#if due}
+					{#if onSetDue}
+						<button
+							type="button"
+							class="due due-{due.tone}"
+							aria-label="Prazo: {due.label}. Alterar"
+							onclick={openPicker}>{due.label}</button
+						>
+					{:else}
+						<span class="due due-{due.tone}">{due.label}</span>
+					{/if}
+				{/if}
+				{#if missionTitle}
+					{#if onOpenMission}
+						<button type="button" class="mission-tag" onclick={onOpenMission}>{missionTitle}</button
+						>
+					{:else}
+						<span class="mission-tag">{missionTitle}</span>
+					{/if}
+				{/if}
+			</span>
 		{/if}
 	</div>
 
+	{#if onSetDue}
+		<input
+			bind:this={picker}
+			class="picker"
+			type="date"
+			tabindex="-1"
+			aria-hidden="true"
+			value={item.due_date ?? ''}
+			onchange={(e) => onSetDue?.(item.id, e.currentTarget.value || null)}
+		/>
+	{/if}
+
 	<div class="actions">
+		{#if onSetDue && !item.completed}
+			<button
+				type="button"
+				class="icon-btn"
+				aria-label={item.due_date ? 'Alterar prazo' : 'Definir prazo'}
+				onclick={openPicker}
+			>
+				<CalendarDays size={16} />
+			</button>
+		{/if}
 		{#if onTogglePriority}
 			<button
 				type="button"
@@ -77,6 +130,7 @@
 
 <style>
 	.row {
+		position: relative;
 		display: flex;
 		align-items: center;
 		gap: 12px;
@@ -124,6 +178,47 @@
 	.done .text {
 		text-decoration: line-through;
 		color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px;
+	}
+	.due {
+		padding: 3px 8px;
+		border-radius: var(--radius-selector);
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 1.2;
+	}
+	button.due {
+		cursor: pointer;
+	}
+	.due-overdue {
+		background: color-mix(in oklab, var(--color-error) 16%, transparent);
+		color: var(--color-error);
+	}
+	.due-today {
+		background: var(--c-protocols-soft);
+		color: var(--c-protocols-ink);
+	}
+	.due-soon {
+		background: var(--c-ops-soft);
+		color: var(--c-ops-ink);
+	}
+	.due-later {
+		background: var(--color-base-300);
+		color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+	}
+	/* Input nativo de data, invisível: só serve para abrir o calendário */
+	.picker {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		opacity: 0;
+		pointer-events: none;
 	}
 
 	.mission-tag {

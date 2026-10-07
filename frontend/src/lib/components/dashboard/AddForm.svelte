@@ -10,6 +10,7 @@
 	import type { Section, FormType, FormPayload } from '$lib/components/dashboard';
 	import type { Wallet } from '$lib';
 	import * as api from '$lib/api';
+	import { addDaysISO, nextWeekdayISO, todayISO } from '$lib/dates';
 
 	// ── Props ─────────────────────────────────────────────
 	let {
@@ -27,6 +28,7 @@
 	// ── Internal Form State ───────────────────────────────
 	let content = $state('');
 	let taskGoalId = $state('');
+	let taskDue = $state(''); // "YYYY-MM-DD" ou vazio
 	let goalTitle = $state('');
 	let wishlistUrl = $state('');
 	let wishlistFetching = $state(false);
@@ -101,8 +103,14 @@
 	async function handleSubmit() {
 		if (selectedType === 'task') {
 			if (!content.trim()) return;
-			await onSubmit({ kind: 'task', content: content.trim(), goal_id: taskGoalId || null });
+			await onSubmit({
+				kind: 'task',
+				content: content.trim(),
+				goal_id: taskGoalId || null,
+				due_date: taskDue || null
+			});
 			content = '';
+			taskDue = '';
 		} else if (selectedType === 'goal') {
 			if (!goalTitle.trim()) return;
 			await onSubmit({ kind: 'goal', title: goalTitle.trim() });
@@ -173,6 +181,13 @@
 						: 'Adicionar à Wishlist'
 	);
 
+	const DUE_SHORTCUTS = [
+		{ label: 'Hoje', value: () => todayISO() },
+		{ label: 'Amanhã', value: () => addDaysISO(todayISO(), 1) },
+		{ label: 'Sexta', value: () => nextWeekdayISO(5) },
+		{ label: 'Semana que vem', value: () => nextWeekdayISO(1) }
+	];
+
 	const FINANCE_TYPES = [
 		{ v: 'transaction' as FormType, label: 'Transação', Icon: ArrowRightLeft },
 		{ v: 'wallet' as FormType, label: 'Carteira', Icon: WalletIcon }
@@ -195,6 +210,27 @@
 			placeholder="Ex: Revisar relatório…"
 			bind:value={content}
 		></textarea>
+		<div class="flex flex-col gap-1.5 text-xs text-base-content/70">
+			<label for="task-due">Prazo (opcional)</label>
+			<div class="flex flex-wrap items-center gap-1.5">
+				{#each DUE_SHORTCUTS as s (s.label)}
+					<button
+						type="button"
+						class="due-chip"
+						class:on={taskDue === s.value()}
+						aria-pressed={taskDue === s.value()}
+						onclick={() => (taskDue = taskDue === s.value() ? '' : s.value())}>{s.label}</button
+					>
+				{/each}
+				<input
+					id="task-due"
+					type="date"
+					class="input input-sm w-auto"
+					style={S.cyan}
+					bind:value={taskDue}
+				/>
+			</div>
+		</div>
 		{#if goals.length > 0}
 			<label class="flex flex-col gap-1.5 text-xs text-base-content/70">
 				Missão (opcional)
@@ -408,3 +444,19 @@
 		{submitLabel}
 	</button>
 </form>
+
+<style>
+	.due-chip {
+		min-height: 32px;
+		padding: 0 10px;
+		border-radius: var(--radius-selector);
+		background: var(--c-ops-soft);
+		color: var(--c-ops-ink);
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.due-chip.on {
+		background: var(--c-ops);
+		color: var(--color-base-100);
+	}
+</style>

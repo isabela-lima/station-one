@@ -4,6 +4,7 @@
 	import * as api from '$lib/api';
 	import type { FinanceOverview, Goal, Habit, Item, Section } from '$lib';
 	import JournalTile from '$lib/components/journal/JournalTile.svelte';
+	import { compareByUrgency, dueInfo } from '$lib/dates';
 
 	let {
 		items,
@@ -41,7 +42,7 @@
 	const openTasks = $derived(
 		tasks
 			.filter((t) => !t.completed || justDone.has(t.id))
-			.sort((a, b) => Number(b.priority) - Number(a.priority))
+			.sort(compareByUrgency)
 			.slice(0, 6)
 	);
 	const doneCount = $derived(tasks.filter((t) => t.completed).length);
@@ -104,8 +105,16 @@
 							</button>
 							<span class="flex min-w-0 flex-1 flex-col gap-1">
 								<span class="task-text break-words">{t.content}</span>
-								{#if t.goal_id && goalTitle.has(t.goal_id)}
-									<span class="mission-tag">{goalTitle.get(t.goal_id)}</span>
+								{#if (t.due_date && !t.completed) || (t.goal_id && goalTitle.has(t.goal_id))}
+									<span class="meta">
+										{#if t.due_date && !t.completed}
+											{@const due = dueInfo(t.due_date)}
+											<span class="due due-{due.tone}">{due.label}</span>
+										{/if}
+										{#if t.goal_id && goalTitle.has(t.goal_id)}
+											<span class="mission-tag">{goalTitle.get(t.goal_id)}</span>
+										{/if}
+									</span>
 								{/if}
 							</span>
 							{#if t.priority}
@@ -339,6 +348,36 @@
 	.task.done .task-text {
 		text-decoration: line-through;
 		color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px;
+	}
+	.due {
+		padding: 3px 8px;
+		border-radius: var(--radius-selector);
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 1.2;
+	}
+	.due-overdue {
+		background: color-mix(in oklab, var(--color-error) 16%, transparent);
+		color: var(--color-error);
+	}
+	.due-today {
+		background: var(--c-protocols-soft);
+		color: var(--c-protocols-ink);
+	}
+	.due-soon {
+		background: var(--c-ops-soft);
+		color: var(--c-ops-ink);
+	}
+	.due-later {
+		background: var(--color-base-300);
+		color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
 	}
 
 	.mission-tag {

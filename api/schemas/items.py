@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
@@ -11,7 +11,7 @@ class ItemCreate(BaseModel):
     title: str | None = None
     completed: bool = False
     priority: bool = False
-    due_date: datetime | None = None
+    due_date: date | None = None
     goal_id: UUID | None = None
 
 
@@ -22,7 +22,7 @@ class ItemUpdate(BaseModel):
     title: str | None = None
     completed: bool | None = None
     priority: bool | None = None
-    due_date: datetime | None = None
+    due_date: date | None = None
     goal_id: UUID | None = None
 
 
@@ -36,7 +36,7 @@ class ItemOut(BaseModel):
     title: str | None
     completed: bool
     priority: bool
-    due_date: datetime | None
+    due_date: date | None
     goal_id: UUID | None
     completed_at: datetime | None
     created_at: datetime
