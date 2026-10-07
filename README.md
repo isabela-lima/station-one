@@ -49,6 +49,7 @@ api/migrations/init.sql
 api/migrations/phase3.sql
 api/supabase/migrations/20261004000000_enable_realtime.sql
 api/supabase/migrations/20261004010000_tasks_missions_journal.sql
+api/supabase/migrations/20261007000000_cleanup_legacy_data.sql
 ```
 
 As migrações em `api/supabase/migrations/` são idempotentes (podem rodar de novo sem efeito).
