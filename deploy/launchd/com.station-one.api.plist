@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Modelo: deploy/install.sh troca os __MARCADORES__ e instala em ~/Library/LaunchAgents -->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.station-one.api</string>
+	<key>WorkingDirectory</key>
+	<string>__ROOT__/api</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>__ROOT__/api/.venv/bin/uvicorn</string>
+		<string>main:app</string>
+		<string>--host</string>
+		<string>127.0.0.1</string>
+		<string>--port</string>
+		<string>__API_PORT__</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	<key>StandardOutPath</key>
+	<string>__LOG_DIR__/api.log</string>
+	<key>StandardErrorPath</key>
+	<string>__LOG_DIR__/api.log</string>
+</dict>
+</plist>
