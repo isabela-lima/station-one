@@ -5,12 +5,12 @@
 <div class="toast toast-end toast-bottom z-50 gap-2">
 	{#each $toasts as toast (toast.id)}
 		<div
-			class="alert glass-card flex items-center gap-2 py-3 px-4 shadow-lg"
+			class="glass-card alert flex items-center gap-2 px-4 py-3 shadow-lg"
 			style="border-color: {toast.type === 'success'
-				? 'rgba(52,211,153,0.4)'
+				? 'color-mix(in oklab, var(--color-success) 40%, transparent)'
 				: toast.type === 'error'
-					? 'rgba(248,113,113,0.4)'
-					: 'rgba(6,182,212,0.4)'}; min-width: 240px; max-width: 340px"
+					? 'color-mix(in oklab, var(--color-error) 40%, transparent)'
+					: 'color-mix(in oklab, var(--color-primary) 40%, transparent)'}; min-width: 240px; max-width: 340px"
 		>
 			{#if toast.type === 'success'}
 				<svg
@@ -20,7 +20,12 @@
 					viewBox="0 0 24 24"
 					stroke="currentColor"
 				>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M5 13l4 4L19 7"
+					/>
 				</svg>
 			{:else if toast.type === 'error'}
 				<svg

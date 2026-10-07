@@ -20,7 +20,7 @@
 			// Pega as 5 ultimas transacoes
 			transactions = txData.slice(0, 5);
 		} catch (e) {
-			console.error("Erro ao carregar dados financeiros:", e);
+			console.error('Erro ao carregar dados financeiros:', e);
 		} finally {
 			loading = false;
 		}
@@ -31,55 +31,88 @@
 	}
 </script>
 
-<section class="flex-1 px-8 pb-8 animate-fade-in">
+<section class="animate-fade-in flex-1 px-8 pb-8">
 	<div class="mb-6 flex items-center gap-2">
 		<LineChart size={16} class="text-info" />
-		<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Finanças</h2>
-		<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(56,189,248,0.12); color: #38bdf8">HUD</span>
+		<h2 class="text-sm font-semibold tracking-widest text-base-content/60 uppercase">Finanças</h2>
+		<span
+			class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums"
+			style="background: color-mix(in oklab, var(--color-info) 12%, transparent); color: var(--color-info)"
+			>HUD</span
+		>
 	</div>
 
 	{#if loading}
 		<div class="space-y-6">
 			<div class="skeleton-pulse h-32 w-full rounded-xl"></div>
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 				{#each [1, 2, 3] as i}
-					<div class="skeleton-pulse h-24 w-full rounded-xl" style="animation-delay: {i * 100}ms"></div>
+					<div
+						class="skeleton-pulse h-24 w-full rounded-xl"
+						style="animation-delay: {i * 100}ms"
+					></div>
 				{/each}
 			</div>
 		</div>
 	{:else if overview}
 		<div class="space-y-6">
 			<!-- Resumo / Autonomy -->
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 				<!-- Runaway HUD -->
-				<div class="col-span-1 md:col-span-2 rounded-xl p-5 flex flex-col justify-center relative overflow-hidden" style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.05)); border: 1px solid rgba(6,182,212,0.2);">
-					<div class="absolute right-0 top-0 opacity-10">
+				<div
+					class="relative col-span-1 flex flex-col justify-center overflow-hidden rounded-xl p-5 md:col-span-2"
+					style="background: linear-gradient(135deg, color-mix(in oklab, var(--color-primary) 10%, transparent), color-mix(in oklab, var(--color-info) 5%, transparent)); border: 1px solid color-mix(in oklab, var(--color-primary) 20%, transparent);"
+				>
+					<div class="absolute top-0 right-0 opacity-10">
 						<Activity size={120} />
 					</div>
-					<div class="relative z-10 text-xs font-semibold uppercase tracking-widest text-primary mb-1">
+					<div
+						class="relative z-10 mb-1 text-xs font-semibold tracking-widest text-primary uppercase"
+					>
 						Autonomia (Runway)
 					</div>
 					<div class="relative z-10 flex items-end gap-2">
-						<span class="text-5xl font-bold tracking-tighter" style="color: #e0f2fe;">{overview.autonomy.days_of_runway}</span>
-						<span class="text-sm text-base-content/50 uppercase tracking-widest mb-1">dias</span>
+						<span
+							class="text-5xl font-bold tracking-tighter"
+							style="color: var(--color-base-content);">{overview.autonomy.days_of_runway}</span
+						>
+						<span class="mb-1 text-sm tracking-widest text-base-content/50 uppercase">dias</span>
 					</div>
 					<div class="relative z-10 mt-3 flex items-center gap-4 text-xs">
-						<div><span class="text-base-content/40">Gasto Médio:</span> <span class="font-bold text-base-content/80">{formatCurrency(overview.autonomy.avg_daily_expense, overview.autonomy.currency)}/dia</span></div>
-						<div><span class="text-base-content/40">Livre:</span> <span class="font-bold text-success/80">{formatCurrency(overview.autonomy.free_balance, overview.autonomy.currency)}</span></div>
+						<div>
+							<span class="text-base-content/40">Gasto Médio:</span>
+							<span class="font-bold text-base-content/80"
+								>{formatCurrency(
+									overview.autonomy.avg_daily_expense,
+									overview.autonomy.currency
+								)}/dia</span
+							>
+						</div>
+						<div>
+							<span class="text-base-content/40">Livre:</span>
+							<span class="font-bold text-success/80"
+								>{formatCurrency(overview.autonomy.free_balance, overview.autonomy.currency)}</span
+							>
+						</div>
 					</div>
 				</div>
 
 				<!-- Debt alert -->
-				<div class="col-span-1 rounded-xl p-5 flex flex-col justify-center" style="background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2);">
-					<div class="text-xs font-semibold uppercase tracking-widest text-error mb-1 flex items-center gap-1">
+				<div
+					class="col-span-1 flex flex-col justify-center rounded-xl p-5"
+					style="background: color-mix(in oklab, var(--color-error) 5%, transparent); border: 1px solid color-mix(in oklab, var(--color-error) 20%, transparent);"
+				>
+					<div
+						class="mb-1 flex items-center gap-1 text-xs font-semibold tracking-widest text-error uppercase"
+					>
 						<ShieldAlert size={14} /> Dívidas Ativas
 					</div>
-					<div class="text-2xl font-bold text-error tracking-tight mt-1">
+					<div class="mt-1 text-2xl font-bold tracking-tight text-error">
 						{formatCurrency(overview.total_debt, 'BRL')}
 					</div>
 					<div class="mt-2 text-[10px] text-base-content/40">
 						{#if overview.alerts.length > 0}
-							<div class="text-warning font-medium">{overview.alerts[0]}</div>
+							<div class="font-medium text-warning">{overview.alerts[0]}</div>
 						{:else}
 							Sem alertas críticos.
 						{/if}
@@ -89,11 +122,13 @@
 
 			<!-- Wallets -->
 			<div>
-				<div class="flex items-center gap-2 mb-3">
+				<div class="mb-3 flex items-center gap-2">
 					<WalletIcon size={14} class="text-base-content/40" />
-					<h3 class="text-xs font-semibold uppercase tracking-widest text-base-content/50">Carteiras</h3>
+					<h3 class="text-xs font-semibold tracking-widest text-base-content/50 uppercase">
+						Carteiras
+					</h3>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 					{#each overview.wallets as wallet (wallet.id)}
 						<WalletCard {wallet} />
 					{/each}
@@ -102,16 +137,23 @@
 
 			<!-- Transactions -->
 			<div>
-				<div class="flex items-center justify-between mb-3">
-					<h3 class="text-xs font-semibold uppercase tracking-widest text-base-content/50">Últimas Transações</h3>
+				<div class="mb-3 flex items-center justify-between">
+					<h3 class="text-xs font-semibold tracking-widest text-base-content/50 uppercase">
+						Últimas Transações
+					</h3>
 				</div>
-				<div class="rounded-xl p-2" style="background: rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.05);">
+				<div
+					class="rounded-xl p-2"
+					style="background: rgba(0,0,0,0.1); border: 1px solid color-mix(in oklab, var(--color-base-content) 5%, transparent);"
+				>
 					<TransactionList {transactions} />
 				</div>
 			</div>
 		</div>
 	{:else}
-		<div class="flex flex-col items-center justify-center p-12 text-center text-error border border-error/20 rounded-xl bg-error/5">
+		<div
+			class="flex flex-col items-center justify-center rounded-xl border border-error/20 bg-error/5 p-12 text-center text-error"
+		>
 			<ShieldAlert size={32} class="mb-3" />
 			<p>Não foi possível acessar o núcleo financeiro.</p>
 		</div>
@@ -123,7 +165,13 @@
 		animation: fadeIn 0.4s ease-out forwards;
 	}
 	@keyframes fadeIn {
-		from { opacity: 0; transform: translateY(10px); }
-		to { opacity: 1; transform: translateY(0); }
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 </style>

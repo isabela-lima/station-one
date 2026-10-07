@@ -6,7 +6,16 @@
 	import { supabase } from '$lib/supabase';
 	import * as api from '$lib/api';
 	import { showToast } from '$lib/toast';
-	import type { Goal, Habit, Item, Milestone, WishlistItem, Section, FormType, FormPayload } from '$lib';
+	import type {
+		Goal,
+		Habit,
+		Item,
+		WishlistItem,
+		Section,
+		CreatableSection,
+		FormType,
+		FormPayload
+	} from '$lib';
 
 	// ── Components ───────────────────────────────────────
 	import GoalCard from '$lib/components/GoalCard.svelte';
@@ -14,28 +23,34 @@
 	import ItemCard from '$lib/components/ItemCard.svelte';
 	import WishlistCard from '$lib/components/WishlistCard.svelte';
 	import Toast from '$lib/components/Toast.svelte';
-	import DailyLog from '$lib/components/DailyLog.svelte';
-	import AppSidebar from '$lib/components/dashboard/AppSidebar.svelte';
-	import MobileNav from '$lib/components/dashboard/MobileNav.svelte';
-	import MobileSheet from '$lib/components/dashboard/MobileSheet.svelte';
+	import JournalView from '$lib/components/journal/JournalView.svelte';
+	import { loadJournalToday } from '$lib/journal.svelte';
+	import AppHeader from '$lib/components/dashboard/AppHeader.svelte';
+	import CreateDialog from '$lib/components/dashboard/CreateDialog.svelte';
+	import { SECTIONS, sectionColor } from '$lib/components/dashboard/types';
+	import TodayView from '$lib/components/today/TodayView.svelte';
 	import FinanceDashboard from '$lib/components/finance/FinanceDashboard.svelte';
 
-	import { FlameKindling, Zap, Target, ShoppingBag, Star, Trash2, Satellite } from 'lucide-svelte';
+	import { FlameKindling, Zap, Target, ShoppingBag, Trash2, Flame } from 'lucide-svelte';
 
 	// ─── State ────────────────────────────────────────
 	let items = $state<Item[]>([]);
 	let goals = $state<Goal[]>([]);
-	let milestones = $state<Milestone[]>([]);
 	let wishlist = $state<WishlistItem[]>([]);
 	let habits = $state<Habit[]>([]);
 
 	let currentDate = $state('');
 	let currentTime = $state('');
+	let greeting = $state('Olá');
 	let loading = $state(true);
 	let userName = $state('');
+	let profileName = $state<string | null>(null);
 
 	// ─── Weather ──────────────────────────────────────
-	interface WeatherInfo { temp: number; emoji: string; }
+	interface WeatherInfo {
+		temp: number;
+		emoji: string;
+	}
 	let weather = $state<WeatherInfo | null>(null);
 
 	function weatherCodeToEmoji(code: number): string {
@@ -80,38 +95,61 @@
 				localStorage.setItem('weather_coords', JSON.stringify({ lat, lon, ts: Date.now() }));
 				fetchWeather(lat, lon);
 			},
-			() => { /* permissão negada — ok */ }
+			() => {
+				/* permissão negada — ok */
+			}
 		);
 	}
 
-	let activeSection = $state<Section>('operations');
+	let activeSection = $state<Section>('today');
 	let selectedType = $state<FormType>('task');
-	let showMobileForm = $state(false);
+	let createOpen = $state(false);
+	let createKind = $state<CreatableSection>('operations');
+
+	const DEFAULT_TYPE: Record<CreatableSection, FormType> = {
+		operations: 'task',
+		missions: 'goal',
+		protocols: 'habit',
+		finance: 'transaction',
+		wishlist: 'wishlist'
+	};
+
+	/** Abre o formulário já no tipo da seção atual (Hoje → Operação) */
+	function openCreate() {
+		createKind =
+			activeSection === 'today' || activeSection === 'journal' ? 'operations' : activeSection;
+		selectedType = DEFAULT_TYPE[createKind];
+		createOpen = true;
+	}
 
 	/** IDs de itens com ação em andamento (delete, toggle) */
 	let pendingIds = $state<Set<string>>(new Set());
 
 	// ─── Derived ──────────────────────────────────────
-	const focusItems = $derived(items.filter((i) => i.type === 'task' && i.priority && !i.completed));
 	const completedTasks = $derived(items.filter((i) => i.type === 'task' && i.completed));
+	/** Nome para a saudação: só o primeiro nome do perfil; sem nome no perfil, "Comandante" */
+	const firstName = $derived(profileName?.trim().split(/\s+/)[0] || 'Comandante');
+	const goalTitles = $derived(new Map(goals.map((g) => [g.id, g.title])));
+	const topStreak = $derived(habits.reduce((max, h) => Math.max(max, h.streak), 0));
+	const currentSection = $derived(SECTIONS.find((s) => s.id === activeSection)!);
 	const initials = $derived(
-		userName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+		userName
+			.split(' ')
+			.slice(0, 2)
+			.map((w: string) => w[0])
+			.join('')
+			.toUpperCase()
 	);
 
 	// ─── Date / Time ──────────────────────────────────
 	function updateDateTime() {
 		const now = new Date();
-		currentDate = now.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-		currentTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+		const d = now.toLocaleDateString('pt-BR', { weekday: 'long', month: 'long', day: 'numeric' });
+		currentDate = d.charAt(0).toUpperCase() + d.slice(1);
+		currentTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+		const h = now.getHours();
+		greeting = h < 5 ? 'Boa noite' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 	}
-
-	// ─── Auto-select form type on section change ────────────────────────
-	$effect(() => {
-		if (activeSection === 'operations') selectedType = 'task';
-		else if (activeSection === 'missions') selectedType = 'goal';
-		else if (activeSection === 'wishlist') selectedType = 'wishlist';
-		else if (activeSection === 'protocols') selectedType = 'habit';
-	});
 
 	// ─── Helpers ──────────────────────────────────────
 	function setPending(id: string, on: boolean) {
@@ -119,15 +157,20 @@
 	}
 
 	// ─── Handlers: Items ──────────────────────────────
+	// As ações abaixo são otimistas: a tela muda na hora e a API confirma em
+	// segundo plano. Se a API falhar, desfazemos e avisamos.
 	async function handleToggleItem(id: string) {
 		if (pendingIds.has(id)) return;
+		const item = items.find((i) => i.id === id);
+		if (!item) return;
+		const completed = !item.completed;
+		items = items.map((i) => (i.id === id ? { ...i, completed } : i));
 		setPending(id, true);
 		try {
-			const item = items.find((i) => i.id === id);
-			if (!item) return;
-			const updated = await api.items.update(id, { completed: !item.completed });
+			const updated = await api.items.update(id, { completed });
 			items = items.map((i) => (i.id === id ? updated : i));
 		} catch {
+			items = items.map((i) => (i.id === id ? { ...i, completed: item.completed } : i));
 			showToast('Erro ao atualizar item.', 'error');
 		} finally {
 			setPending(id, false);
@@ -136,12 +179,19 @@
 
 	async function handleDeleteItem(id: string) {
 		if (pendingIds.has(id)) return;
+		const index = items.findIndex((i) => i.id === id);
+		if (index === -1) return;
+		const removed = items[index];
+		items = items.filter((i) => i.id !== id);
 		setPending(id, true);
 		try {
 			await api.items.delete(id);
-			items = items.filter((i) => i.id !== id);
 			showToast('Operação removida.');
 		} catch {
+			// Devolve só o item removido (sem desfazer outras mudanças feitas no meio tempo)
+			const next = [...items];
+			next.splice(Math.min(index, next.length), 0, removed);
+			items = next;
 			showToast('Erro ao remover operação.', 'error');
 		} finally {
 			setPending(id, false);
@@ -150,14 +200,16 @@
 
 	async function handleTogglePriority(id: string) {
 		if (pendingIds.has(id)) return;
+		const item = items.find((i) => i.id === id);
+		if (!item) return;
+		const priority = !item.priority;
+		items = items.map((i) => (i.id === id ? { ...i, priority } : i));
 		setPending(id, true);
 		try {
-			const item = items.find((i) => i.id === id);
-			if (!item) return;
-			const updated = await api.items.update(id, { priority: !item.priority });
+			const updated = await api.items.update(id, { priority });
 			items = items.map((i) => (i.id === id ? updated : i));
-			showToast(item.priority ? 'Removido do foco.' : 'Marcado como foco!', 'info');
 		} catch {
+			items = items.map((i) => (i.id === id ? { ...i, priority: item.priority } : i));
 			showToast('Erro ao alterar prioridade.', 'error');
 		} finally {
 			setPending(id, false);
@@ -175,49 +227,46 @@
 		}
 	}
 
-	// ─── Handlers: Goals / Milestones ────────────────
-	async function handleToggleMilestone(milestoneId: string) {
-		if (pendingIds.has(milestoneId)) return;
-		setPending(milestoneId, true);
-		try {
-			const ms = milestones.find((m) => m.id === milestoneId);
-			if (!ms) return;
-			const updated = await api.milestones.update(milestoneId, { completed: !ms.completed });
-			milestones = milestones.map((m) => (m.id === milestoneId ? updated : m));
-		} catch {
-			showToast('Erro ao atualizar marco.', 'error');
-		} finally {
-			setPending(milestoneId, false);
-		}
-	}
-
+	// ─── Handlers: Missões ───────────────────────────
 	async function handleDeleteGoal(goalId: string) {
 		if (pendingIds.has(goalId)) return;
+		const goal = goals.find((g) => g.id === goalId);
+		if (
+			!goal ||
+			!confirm(`Apagar a missão "${goal.title}"? As tarefas dela continuam, sem missão.`)
+		)
+			return;
+		const goalIndex = goals.indexOf(goal);
+		const unlinked = new Set(items.filter((i) => i.goal_id === goalId).map((i) => i.id));
+		goals = goals.filter((g) => g.id !== goalId);
+		items = items.map((i) => (unlinked.has(i.id) ? { ...i, goal_id: null } : i));
 		setPending(goalId, true);
 		try {
-			await api.goals.delete(goalId); // CASCADE removes milestones on DB
-			goals = goals.filter((g) => g.id !== goalId);
-			milestones = milestones.filter((m) => m.goal_id !== goalId);
+			await api.goals.delete(goalId); // o banco desvincula as tarefas (ON DELETE SET NULL)
 			showToast('Missão removida.');
 		} catch {
+			const next = [...goals];
+			next.splice(Math.min(goalIndex, next.length), 0, goal);
+			goals = next;
+			items = items.map((i) => (unlinked.has(i.id) ? { ...i, goal_id: goalId } : i));
 			showToast('Erro ao remover missão.', 'error');
 		} finally {
 			setPending(goalId, false);
 		}
 	}
 
-	async function handleDeleteMilestone(id: string) {
-		if (pendingIds.has(id)) return;
-		setPending(id, true);
+	async function handleAddTaskToGoal(goalId: string, content: string) {
 		try {
-			await api.milestones.delete(id);
-			milestones = milestones.filter((m) => m.id !== id);
-			showToast('Marco removido.');
+			const created = await api.items.create({ content, goal_id: goalId });
+			items = [created, ...items.filter((i) => i.id !== created.id)];
 		} catch {
-			showToast('Erro ao remover marco.', 'error');
-		} finally {
-			setPending(id, false);
+			showToast('Erro ao criar tarefa.', 'error');
+			throw new Error('create failed');
 		}
+	}
+
+	function tasksForGoal(goalId: string) {
+		return items.filter((i) => i.goal_id === goalId);
 	}
 
 	// ─── Handlers: Wishlist ───────────────────────────
@@ -238,11 +287,20 @@
 	// ─── Handlers: Habits ─────────────────────────────
 	async function handleToggleHabit(id: string) {
 		if (pendingIds.has(id)) return;
+		const before = habits.find((h) => h.id === id);
+		if (!before) return;
+		const done = !before.completed_today;
+		habits = habits.map((h) =>
+			h.id === id
+				? { ...h, completed_today: done, streak: Math.max(0, h.streak + (done ? 1 : -1)) }
+				: h
+		);
 		setPending(id, true);
 		try {
 			const updated = await api.habits.toggleToday(id);
 			habits = habits.map((h) => (h.id === id ? updated : h));
 		} catch {
+			habits = habits.map((h) => (h.id === id ? before : h));
 			showToast('Erro ao atualizar protocolo.', 'error');
 		} finally {
 			setPending(id, false);
@@ -263,16 +321,42 @@
 		}
 	}
 
+	// Diário alterado em outro dispositivo: recarrega o dia (agrupando eventos)
+	let journalRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+	function scheduleJournalRefresh() {
+		if (journalRefreshTimer) clearTimeout(journalRefreshTimer);
+		journalRefreshTimer = setTimeout(() => {
+			journalRefreshTimer = null;
+			loadJournalToday(true);
+		}, 500);
+	}
+
+	// Um toggle gera vários eventos realtime seguidos — agrupa num único refetch
+	let habitsRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+	function scheduleHabitsRefresh() {
+		if (habitsRefreshTimer) clearTimeout(habitsRefreshTimer);
+		habitsRefreshTimer = setTimeout(async () => {
+			habitsRefreshTimer = null;
+			try {
+				habits = await api.habits.list();
+			} catch {
+				/* silencioso — o próximo evento ou reload resolve */
+			}
+		}, 300);
+	}
+
 	// ─── Form Submit (dispatched from AddForm) ────────────
 
 	async function handleFormSubmit(payload: FormPayload) {
 		try {
 			switch (payload.kind) {
-				case 'item': {
-					const created = await api.items.create({ type: payload.type, content: payload.content, title: payload.title, completed: false, priority: false });
-					items = [created, ...items];
-					const label = payload.type === 'task' ? 'Operação' : payload.type === 'note' ? 'Nota' : 'Link';
-					showToast(`${label} criada!`);
+				case 'task': {
+					const created = await api.items.create({
+						content: payload.content,
+						goal_id: payload.goal_id
+					});
+					items = [created, ...items.filter((i) => i.id !== created.id)];
+					showToast('Operação criada!');
 					break;
 				}
 				case 'goal': {
@@ -281,17 +365,14 @@
 					showToast('Missão criada!');
 					break;
 				}
-				case 'milestone': {
-					const created = await api.milestones.create({ title: payload.title, goal_id: payload.goal_id });
-					milestones = [...milestones, created];
-					showToast('Marco adicionado!');
-					break;
-				}
 				case 'wishlist': {
 					const created = await api.wishlist.create({
-						title: payload.title, url: payload.url,
-						image_url: payload.image_url, description: payload.description,
-						current_price: payload.current_price, target_price: payload.target_price,
+						title: payload.title,
+						url: payload.url,
+						image_url: payload.image_url,
+						description: payload.description,
+						current_price: payload.current_price,
+						target_price: payload.target_price,
 						currency: payload.currency
 					});
 					wishlist = [created, ...wishlist];
@@ -340,25 +421,33 @@
 
 	onMount(async () => {
 		try {
-			const { data: { session } } = await supabase.auth.getSession();
-			if (!session) { goto('/login'); return; }
+			const {
+				data: { session }
+			} = await supabase.auth.getSession();
+			if (!session) {
+				goto('/login');
+				return;
+			}
 
-			userName = session.user.user_metadata?.name ?? session.user.email?.split('@')[0] ?? 'Astronauta';
+			profileName = session.user.user_metadata?.name ?? null;
+			userName = profileName ?? session.user.email?.split('@')[0] ?? 'Astronauta';
 			updateDateTime();
 			timer = setInterval(updateDateTime, 1000);
 			initWeather();
 
-			const [fetchedItems, fetchedGoals, fetchedWishlist] = await Promise.all([
+			// Tudo em paralelo: cada requisição custa uma ida até o banco
+			loadJournalToday();
+			const [fetchedItems, fetchedGoals, fetchedWishlist, fetchedHabits] = await Promise.all([
 				api.items.list(),
 				api.goals.list(),
-				api.wishlist.list()
+				api.wishlist.list(),
+				api.habits.list()
 			]);
 
 			items = fetchedItems;
 			goals = fetchedGoals;
 			wishlist = fetchedWishlist;
-			milestones = fetchedGoals.length > 0 ? await api.milestones.list() : [];
-			habits = await api.habits.list();
+			habits = fetchedHabits;
 		} catch {
 			showToast('Erro ao carregar dados. Verifique sua conexão.', 'error');
 		} finally {
@@ -368,61 +457,71 @@
 		// ─── Realtime subscriptions (com deduplicação) ────
 		realtimeChannel = supabase
 			.channel('station-one-realtime')
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if (!items.some((i) => i.id === (rec as Item).id))
-						items = [rec as Item, ...items];
-				} else if (eventType === 'UPDATE') {
-					items = items.map((i) => (i.id === rec.id ? (rec as Item) : i));
-				} else if (eventType === 'DELETE') {
-					items = items.filter((i) => i.id !== old.id);
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'items' },
+				({ eventType, new: rec, old }) => {
+					if (eventType === 'INSERT') {
+						if ((rec as Item).type === 'task' && !items.some((i) => i.id === (rec as Item).id))
+							items = [rec as Item, ...items];
+					} else if (eventType === 'UPDATE') {
+						items = items.map((i) => (i.id === rec.id ? (rec as Item) : i));
+					} else if (eventType === 'DELETE') {
+						items = items.filter((i) => i.id !== old.id);
+					}
 				}
-			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if (!goals.some((g) => g.id === (rec as Goal).id))
-						goals = [...goals, rec as Goal];
-				} else if (eventType === 'UPDATE') {
-					goals = goals.map((g) => (g.id === rec.id ? (rec as Goal) : g));
-				} else if (eventType === 'DELETE') {
-					goals = goals.filter((g) => g.id !== old.id);
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'goals' },
+				({ eventType, new: rec, old }) => {
+					if (eventType === 'INSERT') {
+						if (!goals.some((g) => g.id === (rec as Goal).id)) goals = [...goals, rec as Goal];
+					} else if (eventType === 'UPDATE') {
+						goals = goals.map((g) => (g.id === rec.id ? (rec as Goal) : g));
+					} else if (eventType === 'DELETE') {
+						goals = goals.filter((g) => g.id !== old.id);
+					}
 				}
-			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'milestones' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if (!milestones.some((m) => m.id === (rec as Milestone).id))
-						milestones = [...milestones, rec as Milestone];
-				} else if (eventType === 'UPDATE') {
-					milestones = milestones.map((m) => (m.id === rec.id ? (rec as Milestone) : m));
-				} else if (eventType === 'DELETE') {
-					milestones = milestones.filter((m) => m.id !== old.id);
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'log_entries' },
+				scheduleJournalRefresh
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'wishlist' },
+				({ eventType, new: rec, old }) => {
+					if (eventType === 'INSERT') {
+						if (!wishlist.some((w) => w.id === (rec as WishlistItem).id))
+							wishlist = [rec as WishlistItem, ...wishlist];
+					} else if (eventType === 'UPDATE') {
+						wishlist = wishlist.map((w) => (w.id === rec.id ? (rec as WishlistItem) : w));
+					} else if (eventType === 'DELETE') {
+						wishlist = wishlist.filter((w) => w.id !== old.id);
+					}
 				}
-			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'wishlist' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if (!wishlist.some((w) => w.id === (rec as WishlistItem).id))
-						wishlist = [rec as WishlistItem, ...wishlist];
-				} else if (eventType === 'UPDATE') {
-					wishlist = wishlist.map((w) => (w.id === rec.id ? (rec as WishlistItem) : w));
-				} else if (eventType === 'DELETE') {
-					wishlist = wishlist.filter((w) => w.id !== old.id);
-				}
-			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'habits' }, ({ eventType, new: rec, old }) => {
-				if (eventType === 'INSERT') {
-					if (!habits.some((h) => h.id === (rec as Habit).id))
-						habits = [...habits, rec as Habit];
-				} else if (eventType === 'UPDATE') {
-					habits = habits.map((h) => (h.id === rec.id ? (rec as Habit) : h));
-				} else if (eventType === 'DELETE') {
-					habits = habits.filter((h) => h.id !== old.id);
-				}
-			})
+			)
+			// Hábitos: a linha crua do banco não tem streak/completed_today (calculados
+			// na API), então em vez de aplicar o evento direto, recarregamos a lista.
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'habits' },
+				scheduleHabitsRefresh
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'habit_completions' },
+				scheduleHabitsRefresh
+			)
 			.subscribe();
 	});
 
 	onDestroy(() => {
 		if (timer) clearInterval(timer);
+		if (habitsRefreshTimer) clearTimeout(habitsRefreshTimer);
+		if (journalRefreshTimer) clearTimeout(journalRefreshTimer);
 		if (realtimeChannel) supabase.removeChannel(realtimeChannel);
 	});
 
@@ -433,135 +532,145 @@
 			goto('/login');
 		}
 	}
-
-	function milestonesForGoal(goalId: string) {
-		return milestones.filter((m) => m.goal_id === goalId);
-	}
 </script>
 
 <!-- ─── Layout ─────────────────────────────────────────── -->
-<div class="h-screen flex flex-col lg:flex-row font-sans overflow-hidden">
+<div
+	class="mx-auto flex min-h-screen w-full max-w-[1320px] flex-col gap-6 px-4 pt-5 pb-12 sm:px-7 sm:pt-7"
+>
+	<AppHeader
+		bind:activeSection
+		{userName}
+		{initials}
+		onCreate={openCreate}
+		onLogout={handleLogout}
+	/>
 
-	<main class="flex-1 flex flex-col overflow-y-auto pb-20 lg:pb-0">
-
-		<!-- Header -->
-		<header class="flex items-end justify-between px-8 pt-6 pb-4">
-			<div class="flex items-center gap-3">
-				<div class="flex h-9 w-9 items-center justify-center rounded-full" style="background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.25)">
-					<Satellite size={18} class="text-primary" />
-				</div>
-				<div>
-					<div class="text-xs font-medium tracking-widest uppercase text-primary/60">Station One</div>
-					<div class="flex items-center gap-2">
-						<span class="text-xs text-base-content/30 capitalize">{currentDate}</span>
-						{#if weather}
-							<span
-								class="weather-badge"
-								title="Clima atual"
-							>
-								{weather.emoji} {weather.temp}°C
-							</span>
-						{/if}
-					</div>
-				</div>
+	{#if activeSection === 'today'}
+		<!-- Hero -->
+		<section class="flex flex-wrap items-end justify-between gap-4 px-1">
+			<div class="flex flex-col gap-2">
+				<p class="text-sm font-semibold text-base-content/70">
+					{currentDate}{#if weather}
+						· {weather.emoji} {weather.temp}°C{/if}
+				</p>
+				<h1 class="font-display hero-title">{greeting}, {firstName}.</h1>
 			</div>
-			<div class="clock-display text-5xl lg:text-6xl font-bold leading-none">{currentTime}</div>
-		</header>
-
-		<!-- Daily Log da Estação -->
-		<DailyLog />
-
-		<!-- Focus banner -->
-		{#if focusItems.length > 0}
-			<section class="px-8 pb-4">
-				<div class="rounded-xl p-4" style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2)">
-					<div class="mb-3 flex items-center gap-2">
-						<Star size={14} class="text-warning" fill="currentColor" />
-						<span class="text-xs font-semibold uppercase tracking-widest text-warning/80">Foco de Hoje</span>
-					</div>
-					<div class="space-y-2">
-						{#each focusItems as item (item.id)}
-							<label class="flex cursor-pointer items-center gap-3">
-								<input type="checkbox" class="checkbox checkbox-sm border-primary/40 checked:border-primary checked:bg-primary" checked={item.completed} onchange={() => handleToggleItem(item.id)} disabled={pendingIds.has(item.id)} />
-								<span class="text-sm font-medium">{item.content}</span>
-							</label>
-						{/each}
-					</div>
+			<div class="flex flex-wrap gap-3">
+				<div class="hero-stat">
+					<span class="hero-stat-value font-mono-num">{currentTime}</span>
+					<span class="hero-stat-label">agora</span>
 				</div>
-			</section>
-		{/if}
-
-		<!-- ── Section: Operações ───────────────────────── -->
-		{#if activeSection === 'operations'}
-			<section class="flex-1 px-6 pb-6">
-				<div class="mb-2 flex items-center justify-between px-1">
-					<div class="flex items-center gap-2">
-						<Zap size={14} class="text-primary" />
-						<h2 class="text-xs font-semibold uppercase tracking-widest text-base-content/40">Operações</h2>
-						<span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(6,182,212,0.12); color: #06b6d4">{items.length}</span>
+				{#if topStreak > 0}
+					<div class="hero-stat sec-protocols streak-stat">
+						<span class="hero-stat-value flex items-center gap-2">
+							<Flame size={24} fill="currentColor" />{topStreak}
+							{topStreak === 1 ? 'dia' : 'dias'}
+						</span>
+						<span class="hero-stat-label">maior streak ativo</span>
 					</div>
-					{#if completedTasks.length > 0}
-						<button onclick={handleClearCompleted} class="btn btn-ghost btn-xs gap-1 text-base-content/30 hover:text-error">
-							<Trash2 size={11} />
-							Limpar concluídas ({completedTasks.length})
-						</button>
-					{/if}
-				</div>
+				{/if}
+			</div>
+		</section>
 
+		<TodayView
+			{items}
+			{habits}
+			{goals}
+			{loading}
+			{pendingIds}
+			onToggleItem={handleToggleItem}
+			onToggleHabit={handleToggleHabit}
+			onOpenSection={(sec) => (activeSection = sec)}
+		/>
+	{:else}
+		<!-- Página de seção -->
+		<section class="tile sec-{sectionColor(activeSection)} flex flex-col gap-5">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<h1 class="font-display flex items-center gap-3 text-2xl sm:text-3xl">
+					<currentSection.Icon size={26} style="color: var(--sec)" />
+					{currentSection.label}
+				</h1>
+				{#if activeSection === 'operations' && completedTasks.length > 0}
+					<button
+						onclick={handleClearCompleted}
+						class="btn gap-1.5 text-base-content/70 btn-ghost btn-sm hover:text-error"
+					>
+						<Trash2 size={14} />
+						Limpar concluídas ({completedTasks.length})
+					</button>
+				{/if}
+			</div>
+
+			{#if activeSection === 'operations'}
 				{#if loading}
-					<div class="space-y-1">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-8 w-full rounded-lg" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-2">
+						{#each [1, 2, 3] as i (i)}<div
+								class="skeleton-pulse h-10 w-full"
+								style="animation-delay: {i * 100}ms"
+							></div>{/each}
+					</div>
 				{:else}
 					<div class="space-y-0.5">
 						{#each items as item, i (item.id)}
-							<ItemCard {item} index={i} pending={pendingIds.has(item.id)} onToggle={handleToggleItem} onDelete={handleDeleteItem} onTogglePriority={handleTogglePriority} />
+							<ItemCard
+								{item}
+								index={i}
+								pending={pendingIds.has(item.id)}
+								missionTitle={item.goal_id ? goalTitles.get(item.goal_id) : null}
+								onOpenMission={() => (activeSection = 'missions')}
+								onToggle={handleToggleItem}
+								onDelete={handleDeleteItem}
+								onTogglePriority={handleTogglePriority}
+							/>
 						{/each}
 						{#if items.length === 0}
-							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
+							<div class="empty-state">
 								<Zap size={28} />
-								<p class="text-sm text-center">Nenhuma operação ainda.<br />Adicione uma pela barra lateral.</p>
+								<p>Nenhuma operação ainda.<br />Use o botão <strong>Novo</strong> para criar.</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
-			</section>
-
-		<!-- ── Section: Missões ─────────────────────────── -->
-		{:else if activeSection === 'missions'}
-			<section class="flex-1 px-8 pb-8">
-				<div class="mb-4 flex items-center gap-2">
-					<Target size={16} class="text-secondary" />
-					<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Missões</h2>
-					<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(139,92,246,0.15); color: #8b5cf6">{goals.length}</span>
-				</div>
-
+			{:else if activeSection === 'missions'}
 				{#if loading}
-					<div class="space-y-3">{#each [1, 2] as i (i)}<div class="skeleton-pulse h-28 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-3">
+						{#each [1, 2] as i (i)}<div
+								class="skeleton-pulse h-28 w-full"
+								style="animation-delay: {i * 100}ms"
+							></div>{/each}
+					</div>
 				{:else}
 					<div class="space-y-4">
 						{#each goals as goal, i (goal.id)}
-							<GoalCard {goal} index={i} milestones={milestonesForGoal(goal.id)} {pendingIds} onToggleMilestone={handleToggleMilestone} onDeleteGoal={handleDeleteGoal} onDeleteMilestone={handleDeleteMilestone} />
+							<GoalCard
+								{goal}
+								index={i}
+								tasks={tasksForGoal(goal.id)}
+								{pendingIds}
+								onToggleTask={handleToggleItem}
+								onDeleteTask={handleDeleteItem}
+								onTogglePriority={handleTogglePriority}
+								onAddTask={handleAddTaskToGoal}
+								onDeleteGoal={handleDeleteGoal}
+							/>
 						{/each}
 						{#if goals.length === 0}
-							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
-								<Target size={32} />
-								<p class="text-sm text-center">Nenhuma missão ainda.<br />Defina seus objetivos de longo prazo.</p>
+							<div class="empty-state">
+								<Target size={28} />
+								<p>Nenhuma missão ainda.<br />Defina seus objetivos de longo prazo.</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
-			</section>
-
-		<!-- ── Section: Protocolos ────────────────────── -->
-		{:else if activeSection === 'protocols'}
-			<section class="flex-1 px-8 pb-8">
-				<div class="mb-4 flex items-center gap-2">
-					<FlameKindling size={16} style="color: rgb(251,146,60)" />
-					<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Protocolos</h2>
-					<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(251,146,60,0.12); color: rgb(251,146,60)">{habits.length}</span>
-				</div>
-
+			{:else if activeSection === 'protocols'}
 				{#if loading}
-					<div class="space-y-3">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-20 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-3">
+						{#each [1, 2, 3] as i (i)}<div
+								class="skeleton-pulse h-20 w-full"
+								style="animation-delay: {i * 100}ms"
+							></div>{/each}
+					</div>
 				{:else}
 					<div class="space-y-3">
 						{#each habits as habit (habit.id)}
@@ -573,68 +682,100 @@
 							/>
 						{/each}
 						{#if habits.length === 0}
-							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
-								<FlameKindling size={32} />
-								<p class="text-sm text-center">Nenhum protocolo ainda.<br />Construa seus hábitos diários.</p>
+							<div class="empty-state">
+								<FlameKindling size={28} />
+								<p>Nenhum protocolo ainda.<br />Construa seus hábitos diários.</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
-			</section>
-
-		<!-- ── Section: Wishlist ────────────────────────── -->
-		{:else if activeSection === 'wishlist'}
-
-			<section class="flex-1 px-8 pb-8">
-				<div class="mb-4 flex items-center gap-2">
-					<ShoppingBag size={16} class="text-accent" />
-					<h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/60">Wishlist</h2>
-					<span class="rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums" style="background: rgba(34,211,238,0.12); color: #22d3ee">{wishlist.length}</span>
-				</div>
-
+			{:else if activeSection === 'wishlist'}
 				{#if loading}
-					<div class="space-y-3">{#each [1, 2, 3] as i (i)}<div class="skeleton-pulse h-20 w-full" style="animation-delay: {i * 100}ms"></div>{/each}</div>
+					<div class="space-y-3">
+						{#each [1, 2, 3] as i (i)}<div
+								class="skeleton-pulse h-20 w-full"
+								style="animation-delay: {i * 100}ms"
+							></div>{/each}
+					</div>
 				{:else}
 					<div class="space-y-3">
 						{#each wishlist as wishlistItem, i (wishlistItem.id)}
-							<WishlistCard {wishlistItem} index={i} pending={pendingIds.has(wishlistItem.id)} onDelete={handleDeleteWishlist} />
+							<WishlistCard
+								{wishlistItem}
+								index={i}
+								pending={pendingIds.has(wishlistItem.id)}
+								onDelete={handleDeleteWishlist}
+							/>
 						{/each}
 						{#if wishlist.length === 0}
-							<div class="flex flex-col items-center gap-3 py-16 text-base-content/25">
-								<ShoppingBag size={32} />
-								<p class="text-sm text-center">Wishlist vazia.<br />Cole uma URL para adicionar itens.</p>
+							<div class="empty-state">
+								<ShoppingBag size={28} />
+								<p>Wishlist vazia.<br />Cole uma URL para adicionar itens.</p>
 							</div>
 						{/if}
 					</div>
 				{/if}
-			</section>
-
-		<!-- ── Section: Financeiro ────────────────────────── -->
-		{:else if activeSection === 'finance'}
-			<FinanceDashboard />
-		{/if}
-
-	</main>
-
-	<AppSidebar
-		{userName}
-		{initials}
-		bind:activeSection
-		bind:selectedType
-		{goals}
-		onLogout={handleLogout}
-		onSubmit={handleFormSubmit}
-	/>
+			{:else if activeSection === 'journal'}
+				<JournalView />
+			{:else if activeSection === 'finance'}
+				<FinanceDashboard />
+			{/if}
+		</section>
+	{/if}
 </div>
 
-<MobileNav bind:activeSection bind:showMobileForm />
-
-<MobileSheet
-	bind:show={showMobileForm}
-	{activeSection}
+<CreateDialog
+	bind:open={createOpen}
+	bind:kind={createKind}
 	bind:selectedType
 	{goals}
 	onSubmit={handleFormSubmit}
 />
 
 <Toast />
+
+<style>
+	.hero-title {
+		margin: 0;
+		font-size: var(--hero-size);
+		line-height: 1.05;
+	}
+	.hero-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 14px 18px;
+		border-radius: var(--tile-radius);
+		background: var(--color-base-200);
+		border: var(--tile-border);
+		box-shadow: var(--tile-shadow);
+	}
+	.hero-stat-value {
+		font-family: var(--font-display);
+		font-weight: var(--display-weight);
+		font-size: 30px;
+		line-height: 1;
+	}
+	.hero-stat-label {
+		font-size: 13px;
+		color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+	}
+	.streak-stat {
+		background: var(--sec-soft);
+		color: var(--sec-ink);
+	}
+	.streak-stat .hero-stat-label {
+		color: inherit;
+		opacity: 0.85;
+	}
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+		padding: 48px 0;
+		text-align: center;
+		font-size: 14px;
+		color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+	}
+</style>

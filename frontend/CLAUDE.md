@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projeto
 
-**Station One** é um dashboard pessoal PWA estilo "space station" — relógio, clima, operações (tarefas/notas/links), missões (metas + marcos), protocolos (hábitos com streak), log diário, wishlist e finanças. Tema escuro com glassmorphism, acentos ciano/roxo.
+**Station One** é um dashboard pessoal PWA estilo "space station" — relógio, clima, operações (tarefas), missões (projetos que agrupam tarefas), protocolos (hábitos com streak), diário de bordo (entradas com hora, humor/energia e resumo automático do dia), wishlist e finanças. Tema escuro com glassmorphism, acentos ciano/roxo.
 
 - **Notion (planejamento):** https://www.notion.so/361ba7a32d94810baa54f3fd05f70dcf
 - **Kanban de tarefas:** https://www.notion.so/e52fa9959a554f9ab97a47b855de5635
@@ -39,20 +39,27 @@ Toda chamada ao FastAPI passa o JWT do Supabase no header `Authorization: Bearer
 ### Fluxo de dados no dashboard (`src/routes/+page.svelte`)
 
 1. `onMount` → busca todos os dados via `api.*` em paralelo com `Promise.all`
-2. Supabase realtime via `postgres_changes` mantém sincronização ao vivo para `items`, `goals`, `milestones`, `wishlist`, `habits`
-3. Todo estado é Svelte 5 `$state` — sem stores externos exceto `toasts` (writable store em `toast.ts`)
-4. `onDestroy` limpa todas as subscriptions do Supabase
+2. Supabase realtime via `postgres_changes` mantém sincronização ao vivo para `items`, `goals`, `wishlist` (aplicando a linha do evento), `habits`/`habit_completions` (refetch via API, porque `streak`/`completed_today` são calculados no backend) e `log_entries` (recarrega o dia do diário)
+3. Toda chamada à API envia `X-Timezone` — o backend usa para saber o "hoje" do usuário (dependência `Today` em `api/deps.py`)
+4. Todo estado é Svelte 5 `$state`. Exceções: `toasts` (writable store em `toast.ts`) e o diário de hoje (`journal.svelte.ts`), compartilhado entre o tile de "Hoje" e a página do Diário
+5. Ações de clique são otimistas: atualize o estado local primeiro, chame a API e, se falhar, desfaça só o item afetado (veja `handleToggleItem`)
+6. `onDestroy` limpa todas as subscriptions do Supabase
+
+### Tarefas, missões e diário
+
+- **Tarefa** = `Item` com `type: 'task'`. Pode pertencer a uma **missão** (`goal_id`); o progresso da missão é tarefas concluídas / total. Os antigos "marcos" viraram tarefas da missão.
+- `completed_at` é preenchido pela API ao concluir e alimenta o resumo do dia.
+- **Diário** (`/journal` na API): entradas curtas com hora (`log_entries`; um link no texto vira `url`), check-in de humor/energia 1–5 (`daily_logs`) e um resumo montado pela API com tarefas concluídas, protocolos feitos e gastos do dia. Notas e links que ficavam em Operações agora são entradas do diário.
 
 ### Formulário unificado
 
-`AddForm.svelte` é o único ponto de criação de qualquer entidade. O tipo é controlado pelo union discriminado `FormPayload` (`src/lib/components/dashboard/types.ts`). O dashboard recebe o payload via prop `onSubmit` e roteila para a API correta.
+`AddForm.svelte` é o único ponto de criação de qualquer entidade; ele é aberto pelo botão **Novo** dentro de `CreateDialog.svelte` (um `<dialog>` nativo, que vira folha inferior no celular). O tipo é controlado pelo union discriminado `FormPayload` (`src/lib/components/dashboard/types.ts`). O dashboard recebe o payload via prop `onSubmit` e roteila para a API correta.
 
 ```ts
 // FormPayload — sempre use o campo `kind` para discriminar
 type FormPayload =
-  | { kind: 'item'; type: 'note' | 'task' | 'link'; ... }
+  | { kind: 'task'; content: string; goal_id: string | null }
   | { kind: 'goal'; title: string }
-  | { kind: 'milestone'; title: string; goal_id: string }
   | { kind: 'wishlist'; ... }
   | { kind: 'transaction'; ... }
   | { kind: 'wallet'; ... }
@@ -61,20 +68,30 @@ type FormPayload =
 
 ### Navegação/layout
 
-- **Desktop:** `AppSidebar` (fixo à direita) com nav entre seções + formulário dinâmico
-- **Mobile:** `MobileNav` (bottom bar) + `MobileSheet` (bottom sheet com formulário)
-- Seção ativa controlada pelo tipo `Section = 'operations' | 'missions' | 'wishlist' | 'finance' | 'protocols'`
+- `AppHeader` no topo: chips das seções (rolam na horizontal no celular), botão **Novo** e menu do avatar (tema + sair).
+- Seção ativa controlada pelo tipo `Section` (`'today' | 'operations' | ...`); a ordem, rótulo, ícone e cor de cada seção ficam em `SECTIONS` (`dashboard/types.ts`). O Diário não usa o botão **Novo**: as entradas são criadas no campo da própria página (e no tile de "Hoje").
+- `today` é a tela inicial (`components/today/TodayView.svelte`): três colunas de tiles que empilham de forma independente. As outras seções são uma página com um único `.tile`.
 
 ## Design System
 
-**Tema DaisyUI customizado `station`** definido em `src/routes/layout.css`:
-- `base-100: #0a0a12` (fundo principal)
-- `primary: #06b6d4` (ciano)
-- `secondary: #8b5cf6` (roxo)
+**Três temas, um layout** — definidos em `src/routes/layout.css` e trocados pelo menu do avatar (`src/lib/theme.svelte.ts`; salvo no `localStorage` e aplicado antes do primeiro paint por um script em `app.html`):
+
+| Tema | Visual |
+|---|---|
+| `orbita` (padrão) | escuro, espacial, acento ciano |
+| `diario` | escuro, minimalista, acento lavanda |
+| `painel` | claro, cada seção com sua cor |
+
+**Nunca use cor fixa em componentes** — use os tokens, para funcionar nos três temas:
+- DaisyUI: `--color-base-100` (fundo), `--color-base-200` (tiles), `--color-base-300` (bordas), `--color-base-content`, `--color-primary`, etc.
+- Fontes: `--font-display` / `--font-body` / `--font-mono` (classes `.font-display`, `.font-mono-num`)
+- Cor por seção: `--c-<seção>`, `--c-<seção>-soft` (fundo), `--c-<seção>-ink` (texto sobre o soft). A classe `.sec-<seção>` (`sec-ops`, `sec-missions`, …) expõe a da seção como `--sec` / `--sec-soft` / `--sec-ink`.
+- Forma: `--tile-radius`, `--tile-pad`, `--radius-field`, `--radius-selector`
+- Nomes de classe que colidem com componentes do DaisyUI (`stat`, `hero`, `menu`, `card`…) herdam estilos dele — use outro nome.
 
 **Classes utilitárias locais:**
-- `.glass-card` — card glassmorphism base (use em todo card novo)
-- `.glass-sidebar` — variante para sidebar
+- `.tile` — bloco do layout (use com uma `.sec-*` para ganhar a cor da seção)
+- `.glass-card` — card interno de lista (nome legado; não tem mais glassmorphism)
 - `.card-enter` — animação de entrada com delay via `style="animation-delay: {index * 50}ms"`
 - `.skeleton-pulse` — loading skeleton
 

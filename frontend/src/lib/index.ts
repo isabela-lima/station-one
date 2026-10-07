@@ -2,7 +2,12 @@
 export * from './models';
 
 // ─── Dashboard Types ──────────────────────────────────────────────────────────
-export type { Section, FormType, FormPayload } from './components/dashboard/types';
+export type {
+	Section,
+	CreatableSection,
+	FormType,
+	FormPayload
+} from './components/dashboard/types';
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 export * from './api';
